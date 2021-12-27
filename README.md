@@ -29,5 +29,5 @@ python Packaging/setup.py install
 
 4. Install other python packages
 ```
-conda install nd2reader numpy
+conda install -c conda-forge nd2reader numpy h5py pynrrd
 ```
