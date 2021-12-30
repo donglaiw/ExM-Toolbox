@@ -6,8 +6,8 @@ Python Toolbox for Expansion Microscopy Volumes
 
 1. Create and activate a conda environment
 ```
-conda create -n exm-toolbox
-source activate exm-toolbox
+conda create -n exm-toolbox python=3
+conda activate exm-toolbox
 ```
 
 2. Compile SimpleITK + SimpleElastix [official link](https://simpleelastix.readthedocs.io/GettingStarted.html) (Can take hours to compile)
@@ -30,4 +30,10 @@ python Packaging/setup.py install
 4. Install other python packages
 ```
 conda install -c conda-forge nd2reader numpy h5py pynrrd
+```
+
+5. Install environment in Jupyter notebook
+```
+conda install -c anaconda ipykernel
+python -m ipykernel install --user --name=exm-toolbox
 ```
