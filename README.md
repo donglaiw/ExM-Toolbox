@@ -6,7 +6,7 @@ Python Toolbox for Expansion Microscopy Volumes
 
 1. Create and activate a conda environment
 ```
-conda create -n exm-toolbox python=3
+conda create -n exm-toolbox python==3.7
 conda activate exm-toolbox
 ```
 
@@ -29,7 +29,7 @@ python Packaging/setup.py install
 
 4. Install other python packages
 ```
-conda install -c conda-forge nd2reader numpy h5py pynrrd
+conda install -c conda-forge nd2reader numpy h5py pynrrd importlib-metadata
 ```
 
 5. Install environment in Jupyter notebook
