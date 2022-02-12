@@ -29,7 +29,7 @@ python Packaging/setup.py install
 
 4. Install other python packages
 ```
-conda install -c conda-forge nd2reader numpy h5py pynrrd importlib-metadata
+conda install -c conda-forge nd2reader numpy h5py pynrrd importlib-metadata openpyxl jupyterlab
 ```
 
 5. Install environment in Jupyter notebook
