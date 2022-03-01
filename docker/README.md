@@ -9,7 +9,11 @@ To run it on your local machine,
 2. [**Skip to this step if you already have Docker downloaded**] Download the .zip file in this repository, unzip it, and navigate to the resulting folder in your terminal. 
 3. Make sure Docker is running in the background and run the following commands:
 
-<< TO DO >>
+```docker build -t myaccount/new_project .```
+
+```docker run -p 8888:8888 myaccount/new_project```
+
+Finally, copy and paste one of the URLs into your browser. This will launch you into the Jupyter notebook.
 
 ### Running on a Cluster
 To run it on a cluser, you'll need to download Singularity. Because Docker requires root priveleges, Singularity is preferred on shared machines. 
