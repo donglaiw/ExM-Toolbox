@@ -1,6 +1,6 @@
 ### About
 
-Link: https://drive.google.com/file/d/1O2XaaQftPs3PbyGdmkscN4anxdBvs6Iw/view?usp=sharing
+Link: https://drive.google.com/file/d/1uAjpC5M0skeW0Wc29D9yvv-ksBe7VWrL/view?usp=sharing
 
 This link contains a .zip folder holding a Dockerfile, requirements.txt file and a source directory holding larvae data and a Jupyter notebook. 
 
@@ -11,9 +11,9 @@ To run it on your local machine,
 2. [**Skip to this step if you already have Docker downloaded**] Download the .zip file in this repository, unzip it, and navigate to the resulting folder in your terminal. 
 3. Make sure Docker is running in the background and run the following commands:
 
-```docker build -t myaccount/new_project .```
+```docker build -t example .```
 
-```docker run -p 8888:8888 myaccount/new_project```
+```docker run -p 8888:8888 example```
 
 Finally, copy and paste one of the URLs into your browser. This will launch you into the Jupyter notebook.
 
