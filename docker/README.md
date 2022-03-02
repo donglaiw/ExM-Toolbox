@@ -32,6 +32,12 @@ Next, we clone the Singularity GitHub and install it using the following two com
 
 ```g./mconfig --without-setuid --prefix=/home/dave/singularity && make -C ./builddir && make -C ./builddir install```
 
-[**Skip to this step if you already have Singularity downloaded**] Finally, download the .zip file in this repository, unzip it, and navigate to the resulting folder. Run it with Singularity using the following commangs:
+[**Skip to this step if you already have Singularity downloaded**] Finally, download the .zip file in this repository, unzip it, and navigate to the resulting folder. Run it with Singularity using the following commands:
+
+```singularity build dockertest```
+
+```singularity shell dockertest```
+
+
 
 << TO DO >>
