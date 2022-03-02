@@ -37,7 +37,3 @@ Next, we clone the Singularity GitHub and install it using the following two com
 ```singularity build dockertest```
 
 ```singularity shell dockertest```
-
-
-
-<< TO DO >>
