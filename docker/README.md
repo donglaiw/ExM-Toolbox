@@ -11,6 +11,10 @@ To run it on your local machine,
 2. [**Skip to this step if you already have Docker downloaded**] Download the .zip file in this repository, unzip it, and navigate to the resulting folder in your terminal. 
 3. Make sure Docker is running in the background and run the following commands:
 
+```export DOCKER_BUILDKIT=0```
+
+```export COMPOSE_DOCKER_CLI_BUILD=0```
+
 ```docker build -t example .```
 
 ```docker run -p 8888:8888 example```
