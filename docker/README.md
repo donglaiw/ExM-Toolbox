@@ -19,7 +19,9 @@ To run it on your local machine,
 
 ```docker run -p 8888:8888 example```
 
-Finally, copy and paste one of the URLs into your browser. This will launch you into the Jupyter notebook.
+Finally, copy and paste one of the URLs into your browser. This will launch you into the Jupyter notebook. To link the dynamic library files, run a cell with the following code:
+```%env LD_LIBRARY_PATH=/src/elastix-4.9.0-linux/lib:$LD_LIBRARY_PATH```
+This ensures that the value of the environment variable ```LD_LIBRARY_PATH``` is exported to the notebook kernels metadata (specifically the ```kernel.json```) file.
 
 ### Running on a Cluster
 To run it on a cluser, you'll need to download Singularity. Because Docker requires root priveleges, Singularity is preferred on shared machines. 
