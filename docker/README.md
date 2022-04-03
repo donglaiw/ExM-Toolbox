@@ -17,6 +17,8 @@ To run it on your local machine,
 
 ```docker build -t example .```
 
+Note: If this doesn't work, you may have a memory issue. Try running ```docker image prune -f``` then ```docker container prune -f```.
+
 ```docker run -p 8888:8888 example```
 
 Finally, copy and paste one of the URLs into your browser. This will launch you into the Jupyter notebook. To link the dynamic library files, run a cell with the following code:
