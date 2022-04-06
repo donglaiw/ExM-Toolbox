@@ -1,15 +1,17 @@
-import os
+import os,copy
 import numpy as np
 import h5py
+import SimpleITK as sitk
 from ..io import imAdjust, imTrimBlack, readH5, writeH5
 
 class sitkTile2Volume:
     # 1. estimate transformation between input volumes
     # 2. warp one volume with the transformation
     # xyz order
-    def __init__(self, tiles_data, volume_h5, aligner, transform_lr, ratio_high=[1,1,1]):
+    def __init__(self, tiles_data, volume_h5, aligner, ratio_output=[1,1,1]):
         self.tiles_data = tiles_data
-        self.tiles_data.setRatio(ratio_high)
+        self.tiles_data.setRatio(ratio_output)
+        self.ratio_output = np.array(ratio_output)
         self.res = self.tiles_data.getResolution()
 
         self.volume_h5 = volume_h5
@@ -20,33 +22,42 @@ class sitkTile2Volume:
         self.aligner.parameter_map['NumberOfResolutions'] = ['2'] # only need high-res 
         self.aligner.updateParameterMap()
 
-        self.transform_lr = transform_lr
-        # unit: um
-        self.global_transform = np.array([float(x) for x in transform_lr["TransformParameters"]])
-        self.global_center = np.array([float(x) for x in transform_lr['CenterOfRotationPoint']])[::-1]
 
     def updateOutputSize(self, pad_ratio = 2.5):
         # zyx order
         tile_size = self.tiles_data.getTileSize()
         self.pad_half = ((tile_size * (pad_ratio-1))//2).astype(int)
         self.output_size = tile_size + 2 * self.pad_half
-        self.transform_lr['Size'] = tuple([str(x) for x in self.output_size[::-1]])
+        self.transform_init['Size'] = tuple([str(x) for x in self.output_size[::-1]])
+
+    def setInitialTransform(self, transform_init):
+        # unit: um
+        self.transform_init = sitk.ParameterMap()
+        for kk in transform_init.keys():
+            self.transform_init[kk] = transform_init[kk]
+        self.transform_init['Spacing'] = tuple([str(x) for x in self.res[::-1]])
+
+        self.global_transform = np.array([float(x) for x in transform_init["TransformParameters"]])
+        self.global_center = np.array([float(x) for x in transform_init['CenterOfRotationPoint']])[::-1]
+
 
     def alignTiles(self, tile_id, fn_out):
-        fn_out = fn_out % tile_id
+        fn_out = fn_out % (self.ratio_output[0], tile_id)
         # get tile data
         tile = self.tiles_data.getTileVolume(tile_id)
-        # step 1. warp tile with transform_lr
+        # step 1. warp tile with transform_init
         # top-left corner position in the raw stitched volume
         tile_top_left = self.tiles_data.getTilePixPosition(tile_id) * self.res
         local_shift = - self.pad_half * self.res
         local_transform = self.global_transform.copy()
         local_transform[-3:] = local_shift[::-1]
-        self.transform_lr["TransformParameters"] = tuple([str(x) for x in local_transform])
+        self.transform_init["TransformParameters"] = tuple([str(x) for x in local_transform])
         local_center = [str(x) for x in self.global_center - (tile_top_left + local_shift)]
-        self.transform_lr['CenterOfRotationPoint'] = tuple(local_center[::-1])
-        #print(self.output_size)
-        tile_warp = self.aligner.warpVolume(tile, transform_map=self.transform_lr).astype(np.uint8)
+        self.transform_init['CenterOfRotationPoint'] = tuple(local_center[::-1])
+        # print(self.output_size)
+        tile_warp = self.aligner.warpVolume(tile, transform_map=self.transform_init).astype(np.uint8)
+        # writeH5(fn_out + '_db.h5', [tile, tile_warp], ['v0','v1'])
+        #print(tile.mean(), tile_warp.mean())
        
         # step 2: find target region: target region in the reference volume
         # top-left point position
@@ -97,11 +108,11 @@ class sitkTile2Volume:
 
     def stitchTiles(self, fn_out, chunk_size=(100,1024,1024)):
         # stitch volumes based on the xlsx locations
-        fn_out_vol = fn_out[:fn_out.rfind('/')] + '_stitched.h5'
+        fn_out_vol = fn_out[:fn_out.rfind('/')] + '_stitched-%d.h5'%(self.ratio_output[0])
         fid = h5py.File(fn_out_vol, 'w')
         ds = fid.create_dataset('main', self.volume_sz, compression="gzip", dtype=np.uint8, chunks=tuple(chunk_size)) 
         for tile_id in range(self.tiles_data.tiles_num):
-            sn = fn_out % tile_id + '.h5'
+            sn = fn_out % (self.ratio_output[0], tile_id) + '.h5'
             if os.path.exists(sn):
                 tile_output = readH5(sn)
                 vol_top_left = np.loadtxt(fn_out % tile_id + '_coord.txt').astype(int)

@@ -37,7 +37,7 @@ class tilesData:
         # output parameters
         self.tiles_size_o = self.getTileSize(ratio)
         self.vol_size_o = self.getVolumeSize(ratio)
-        print('volume size: ', self.vol_size.astype(int), '(downsampled):', self.vol_size_o)        
+        print('original size: ', self.vol_size.astype(int), '(downsampled):', self.vol_size_o)        
            
     def getResolution(self, ratio = None):
         if ratio is None:
@@ -58,8 +58,8 @@ class tilesData:
     
     def getTileVolume(self, tiles_id, ratio = None, im_thres = None, autoscale = None):
         # zyx order        
-        tiles_size_o = self.getTileSize(ratio)
         ratio = self.ratio if ratio is None else ratio
+        tiles_size_o = self.getTileSize(ratio)
         if im_thres is None:
             im_thres = self.im_thres
 
