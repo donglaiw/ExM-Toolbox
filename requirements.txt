@@ -1,0 +1,11 @@
+numpy
+scipy
+matplotlib
+nd2reader
+h5py
+pynrrd
+importlib-metadata
+openpyxl
+jupyterlab
+imageio
+pandas
