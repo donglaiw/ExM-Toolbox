@@ -106,7 +106,7 @@ class sitkTile2Volume:
             print('error in alignment')
             writeH5(fn_out + '_err.h5', np.array([0]))
 
-    def stitchTiles(self, fn_out, chunk_size=(100,1024,1024)):
+    def stitchTiles(self, fn_out, chunk_size=(100,1024,1024), bg_val=80):
         # stitch volumes based on the xlsx locations
         fn_out_vol = fn_out[:fn_out.rfind('/')] + '_stitched-%d.h5'%(self.ratio_output[0])
         fid = h5py.File(fn_out_vol, 'w')
@@ -121,7 +121,10 @@ class sitkTile2Volume:
                 vol = np.array(ds[vol_top_left[0] : vol_bottom_right[0], 
                                    vol_top_left[1] : vol_bottom_right[1],\
                                    vol_top_left[2] : vol_bottom_right[2]])
-                vol[tile_output>0] = tile_output[tile_output>0]
+                # greedy overlap
+                #vol[tile_output>bg_val] = tile_output[tile_output>bg_val]
+                # element-wise max
+                vol = np.maximum(vol, tile_output)
 
                 ds[vol_top_left[0] : vol_bottom_right[0],\
                     vol_top_left[1] : vol_bottom_right[1],\
