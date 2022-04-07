@@ -1,6 +1,6 @@
 import numpy as np
 
-def imTrimBlack(I, return_ind=False):
+def imTrimBlack(I, black_val=0, return_ind=False):
     # trim the black pixels on the border
     ind = np.zeros(6, int)
     for cid in range(3):
@@ -10,7 +10,7 @@ def imTrimBlack(I, return_ind=False):
             tmp_max = I.max(axis=0).max(axis=1)
         elif cid == 2:
             tmp_max = I.max(axis=0).max(axis=0)
-        tmp_ind = np.where(tmp_max>0)[0]
+        tmp_ind = np.where(tmp_max > black_val)[0]
         ind[cid * 2] = tmp_ind[0]
         ind[cid * 2 + 1] = tmp_ind[-1] +1
     if return_ind:
