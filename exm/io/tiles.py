@@ -16,6 +16,7 @@ class tilesData:
         self.tiles_loc = tiles_loc
         self.tiles_loc_min = self.tiles_loc[:,:-1].min(axis=0)
         self.tiles_loc_max = self.tiles_loc[:,:-1].max(axis=0)
+        # top-left position + tile_size
         self.vol_size = (self.tiles_loc_max - self.tiles_loc_min)/self.resolution + self.tiles_size        
         self.tiles_num = self.tiles_loc.shape[0]
         
@@ -77,20 +78,37 @@ class tilesData:
                     
         return tiles_vol
 
+    def getTilePhysicalPosition(self, tiles_id):
+        return self.tiles_loc[tiles_id, :-1] - self.tiles_loc_min
+
     def getTilePixPosition(self, tiles_id, ratio = None):
         if ratio is None:
             ratio = self.ratio
-        top_left = (self.tiles_loc[tiles_id, :-1] - self.tiles_loc_min)/self.resolution/ratio
+        top_left = self.getTilePhysicalPosition(tiles_id)/self.resolution/ratio
         return top_left
-        
+
+    def getTileRawStitchIndex(self, ratio = None):
+        # stitch volumes based on the xlsx locations
+        ratio = self.ratio if ratio is None else ratio        
+        vol_size_o = self.getVolumeSize(ratio)
+        tiles_size_o = self.getTileSize(ratio)
+        output = np.zeros(vol_size_o, np.uint8)
+       
+        for v in range(self.tiles_num):
+            top_left = np.floor(self.getTilePixPosition(v)).astype(int)
+            output[top_left[0] : top_left[0] + tiles_size_o[0],\
+                   top_left[1] : top_left[1] + tiles_size_o[1],\
+                   top_left[2] : top_left[2] + tiles_size_o[2]] = v+1
+        return output
+       
     def getTileRawStitch(self, ratio = None, im_thres = None, autoscale = None):
         # stitch volumes based on the xlsx locations
         if im_thres is None:
             im_thres = self.im_thres
-        vol_size_o = self.getVolumeSize(ratio)
         ratio = self.ratio if ratio is None else ratio        
+        vol_size_o = self.getVolumeSize(ratio)
         output = np.zeros(vol_size_o, np.uint16)
-        
+       
         for v in range(self.tiles_num):
             tiles_vol = self.getTileVolume(self.tiles_loc[v, -1], ratio, im_thres)
             top_left = np.floor(self.getTilePixPosition(v)).astype(int)
@@ -103,7 +121,7 @@ class tilesData:
         return output
 
     def displayTileLoc(self):
-        xy = self.tiles_loc[:,1:3]
+        xy = self.tiles_loc[:,1:3] - self.tiles_loc_min[1:]
         xy_scaled = (xy - xy.min(axis=0))/(xy.max(axis=0) - xy.min(axis=0))
         for vid in range(xy.shape[0]):
             plt.text(xy_scaled[vid,1],-xy_scaled[vid,0], '%d'% self.tiles_loc[vid,3])
