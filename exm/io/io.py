@@ -70,6 +70,7 @@ def readXlsx(xlsx_file):
     # select columns
     zz, yy, xx = np.array(df['Z Pos[µm]'].values), np.array(df['Y Pos[µm]'].values), np.array(df['X Pos[µm]'].values)
     ii = np.array([int(x[1:])-1 for x in df['Point Name'].values])
+    # need to flip x
     out = np.vstack([zz,yy,-xx,ii]).T.astype(float)
     if (ii==0).sum() != 1:
         loop_ind = np.hstack([np.where(ii==0)[0], len(ii)])

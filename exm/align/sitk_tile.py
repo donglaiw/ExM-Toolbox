@@ -60,8 +60,10 @@ class sitkTile:
     def computeTransformMap(self, vol_fix, vol_move, res_fix=None, res_move=None, mask_fix=None, mask_move=None):
         # work with mask correctly
         # https://github.com/SuperElastix/SimpleElastix/issues/198
-        # self.elastix.SetParameter("ImageSampler", "RandomSparseMask")
+        # not enough samples in the mask
+        self.elastix.SetParameter("ImageSampler", "RandomSparseMask")
         self.elastix.SetLogToConsole(False)
+        #self.elastix.SetLogToConsole(True)
         if res_fix is None:
             res_fix = self.resolution
         if res_move is None:
