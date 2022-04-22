@@ -46,12 +46,12 @@ def writeH5(filename, dtarray, datasetname='main'):
         ds[:] = dtarray
     fid.close()
 
-def readXlsx(xlsx_file):
+def readXlsx(xlsx_file, sheet_name='Experiment Data'):
     df = pd.read_excel(
         open(xlsx_file, 'rb'),
         engine='openpyxl',
         header = [1],
-        sheet_name=3)
+        sheet_name=sheet_name)
     # drop invalid rows
     flag = []
     for x in df['Point Name']:
