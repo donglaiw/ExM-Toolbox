@@ -6,6 +6,8 @@ class sitkTile:
     def __init__(self):
         self.elastix = sitk.ElastixImageFilter()
         self.transformix = sitk.TransformixImageFilter()
+        self.otsu = sitk.OtsuThresholdImageFilter()
+        self.dilate = sitk.BinaryDilateImageFilter()
         self.parameter_map = None
         self.transform_type = None
     
@@ -13,12 +15,12 @@ class sitkTile:
         # xyz-order
         self.resolution = resolution
 
-    #### Setup
+    #### Setup Tform, Otsu, Kernel
     def setTransformType(self, transform_type, num_iteration = -1):
         self.transform_type = transform_type
         self.parameter_map = self.createParameterMap(transform_type, num_iteration)
         self.elastix.SetParameterMap(self.parameter_map)
-    
+        
     def updateParameterMap(self, parameter_map=None):
         if parameter_map is not None:
             self.parameter_map = parameter_map
@@ -50,6 +52,38 @@ class sitkTile:
             for trans in transform_type:
                 parameter_map.append(self.createParameterMap(trans, num_iteration))
         return parameter_map
+        
+    def setOtsuValues(self, inside_val = 0, outside_val = 1):
+        self.otsu.SetInsideValue(inside_val)
+        self.otsu.SetOutsideValue(outside_val)
+        
+    def setKernelType(self, kernel = sitk.sitkBox):
+        self.dilate.SetKernelType(kernel)
+    
+    def setKernelRadius(self, radius):
+        self.dilate.SetKernelRadius(radius)
+    
+    ### Run Otsu
+    def computeOtsuThresh(self, image, inside_val = None, outside_val = None, res= None):
+        if inside_val:
+            self.otsu.SetInsideValue(inside_val)
+        if outside_val:
+            self.otsu.SetOutsideValue(outside_val)
+        if res is None:
+            res = self.resolution
+        image = self.convertSitkImage(image, res)
+        return self.otsu.Execute(image)
+    
+    ### Run kernel
+    def computeDilateFilter(self, image, kernel_type = None, kernel_radius = None, res = None):
+        if kernel_type:
+            dilate_filter.SetKernelType(sitk.kernel_type)
+        if kernel_radius:
+            dilate_filter.SetKernelRadius(kernel_radius)
+        if res is None:
+            res = self.resolution
+        image = self.convertSitkImage(image, res)
+        return self.dilate.Execute(image)
 
     #### Estimate and warp with transformation
     def convertSitkImage(self, vol_np, res_np):
