@@ -114,3 +114,4 @@ def tiff2H5(tiff_file, h5_file, chunk_size=(100,1024,1024), step=100, im_thres=N
             im = imAdjust(im, im_thres).astype(np.uint8)
         ds[zi*step:z] = im
     fid.close()
+
