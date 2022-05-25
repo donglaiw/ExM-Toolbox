@@ -1,12 +1,14 @@
-import SimpleITK as sitk
+from platform import platform
+import itk
 import numpy as np
+import pyopencl as cl
 
 class sitkTile:
     # 1. estimate transformation between input volumes
     # 2. warp one volume with the transformation
     def __init__(self):
-        self.elastix = sitk.ElastixImageFilter()
-        self.transformix = sitk.TransformixImageFilter()
+        self.elastix = itk.ElastixRegistrationMethod.New()
+        self.transformix = itk.TransformixFilter.New()
         self.parameter_map = None
         self.transform_type = None
     
@@ -29,16 +31,16 @@ class sitkTile:
         return self.parameter_map
 
     def readTransformMap(self, filename):
-        return sitk.ReadParameterFile(filename)
+        return itk.ReadParameterFile(filename)
 
     def writeTransformMap(self, filename, transform_map):
-        return sitk.WriteParameterFile(transform_map, filename)
+        return itk.WriteParameterFile(transform_map, filename)
     
     def createParameterMap(self, transform_type = None, num_iteration = -1, OpenCL = False):
         if transform_type is None:
             transform_type = self.transform_type
         if len(transform_type) == 1:
-            parameter_map = sitk.GetDefaultParameterMap(transform_type[0])
+            parameter_map = itk.GetDefaultParameterMap(transform_type[0])
             parameter_map['NumberOfSamplesForExactGradient'] = ['100000']
             if num_iteration > 0:
                 parameter_map['MaximumNumberOfIterations'] = [str(num_iteration)]
@@ -48,17 +50,28 @@ class sitkTile:
             parameter_map['FinalBSplineInterpolationOrder'] = ['1']
             #parameter_map['NumberOfResolutions'] = ['1']
         else:
-            parameter_map = sitk.VectorOfParameterMap()
+            parameter_map = itk.VectorOfParameterMap()
             for trans in transform_type:
                 parameter_map.append(self.createParameterMap(trans, num_iteration))
         if OpenCL == True:
+            #set id
+            platforms = str(cl.get_platforms()[0])
+            parameter_map['OpenCLDeviceID'] = platforms
+            #set resampler
             parameter_map['Resampler'] = ["OpenCLResampler"]
             parameter_map['OpenCLResamplerUseOpenCL'] = ["true"]
+            #set pyramids
+            parameter_map['FixedImagePyramid'] = ["OpenCLFixedGenericImagePyramid"]
+            parameter_map['OpenCLFixedGenericImagePyramidUseOpenCL'] = ["true"]
+
+            parameter_map['OpenCLMovingGenericImagePyramidUseOpenCL'] = ["true"]
+            parameter_map['MovingImagePyramid'] = ["OpenCLMovingGenericImagePyramid"]
+
         return parameter_map
 
     #### Estimate and warp with transformation
     def convertSitkImage(self, vol_np, res_np):
-        vol = sitk.GetImageFromArray(vol_np)
+        vol = itk.GetImageFromArray(vol_np)
         vol.SetSpacing(res_np)
         return vol
     

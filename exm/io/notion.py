@@ -1,9 +1,11 @@
+import requests
+import json
 
 class Notion:
     
     def __init__(self, notion_token):
         self.headers = {
-          'Notion-Version': '2021-05-13',
+          'Notion-Version': '2022-02-22',
           'Authorization': 'Bearer ' + notion_token
         }
         self.base_url = "https://api.notion.com/v1"
@@ -34,10 +36,10 @@ class Notion:
     
     def text_append(self, parent_id: str, text: str):
         
-          text_block = {
-            "type": "paragraph",
-            "paragraph": {"text": [{"type": "text", "text": {"content": text,}}]}
-          }
+        text_block = {
+          "type": "paragraph",
+          "paragraph": {"text": [{"type": "text", "text": {"content": text,}}]}
+        }
             
         return self.append_child_blocks(parent_id, [text_block])
             
@@ -58,19 +60,18 @@ class Notion:
     
     def image_add(self, parent_id: str, image_url: str):
         
-		append_children = [
-	    {
-        "type": "image",
-        "image": {
-          "type": "external",
-          "external": {
-            "url": image_url
-          }
-        }
-	    }
-		]
-		
-		return self.append_child_blocks(parent_id, append_children)
+        append_childern = [
+            {'type':'image',
+             'image':{
+                 'type':'external',
+                 'external':{
+                     'url':image_url
+                 }
+             }
+            }
+        ]
+        
+        return self.append_child_blocks(parent_id, append_children)
     
     def delete_block(self, block_id: str):
         
@@ -78,3 +79,21 @@ class Notion:
         response = requests.request("DELETE", url, headers=self.headers)
         
         return response
+    
+    def response_or_error(self, response, key: str = None):
+        
+        response_json = response.json()
+    
+        if "message" in response_json:
+            message = response_json["message"]
+            return {    
+                "code": response.status_code,
+                "error": message
+            }
+    
+        json_response = response.json()
+    
+        if key is not None:
+            return json_response[key]
+    
+        return json_response 
