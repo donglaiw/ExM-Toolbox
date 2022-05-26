@@ -7,8 +7,6 @@ class sitkTile:
     # 1. estimate transformation between input volumes
     # 2. warp one volume with the transformation
     def __init__(self):
-        self.elastix = itk.ElastixRegistrationMethod.New()
-        self.transformix = itk.TransformixFilter.New()
         self.parameter_map = None
         self.transform_type = None
     
@@ -20,10 +18,6 @@ class sitkTile:
             res_vec[ind] = res
     
         self.resolution = res_vec
-
-    #### Setup
-    #def setTransformType(self, transform_type, num_iteration = -1, OpenCL = False):
-    #    self.transform_type = transform_type
     
     def updateParameterMap(self, parameter_map=None):
         if parameter_map is not None:
@@ -63,17 +57,17 @@ class sitkTile:
                 parameter_map.append(self.createParameterMap(trans, num_iteration))
         if OpenCL == True:
             #set id
-            platforms = str(cl.get_platforms()[0])
-            parameter_map['OpenCLDeviceID'] = platforms
+            #parameter_map['OpenCLDeviceID'] = [str(cl.get_platforms()[0])]
+            parameter_map['OpenCLDeviceID'] = ['0x562c55e3b630']
             #set resampler
             parameter_map['Resampler'] = ["OpenCLResampler"]
             parameter_map['OpenCLResamplerUseOpenCL'] = ["true"]
             #set pyramids
-            parameter_map['FixedImagePyramid'] = ["OpenCLFixedGenericImagePyramid"]
-            parameter_map['OpenCLFixedGenericImagePyramidUseOpenCL'] = ["true"]
+            #parameter_map['FixedImagePyramid'] = ["OpenCLFixedGenericImagePyramid"]
+            #parameter_map['OpenCLFixedGenericImagePyramidUseOpenCL'] = ["true"]
 
-            parameter_map['OpenCLMovingGenericImagePyramidUseOpenCL'] = ["true"]
-            parameter_map['MovingImagePyramid'] = ["OpenCLMovingGenericImagePyramid"]
+            #parameter_map['OpenCLMovingGenericImagePyramidUseOpenCL'] = ["true"]
+            #parameter_map['MovingImagePyramid'] = ["OpenCLMovingGenericImagePyramid"]
             
             self.parameter_map = parameter_map
 
@@ -81,9 +75,14 @@ class sitkTile:
 
     #### Estimate and warp with transformation
     def convertSitkImage(self, vol_np, res):
-        vol = itk.GetImageFromArray(vol_np)
-        vol.SetSpacing(res)
-        return vol
+        
+        array = np.asarray(vol_np).astype(np.float32)
+        
+        ImageType = itk.Image[itk.F,3]
+        img = itk.GetImageFromArray(array, ttype = ImageType)
+        img.SetSpacing(res)
+        
+        return img
     
     def computeMask(vol, percentile = 60):
         thrsh = np.percentile(vol, percentile)
@@ -104,6 +103,9 @@ class sitkTile:
             
         img_fix = self.convertSitkImage(vol_fix, res_fix)
         img_move = self.convertSitkImage(vol_move, res_move)
+        
+        self.fix = img_fix
+        self.move = img_move
         
         # 2. set elastix obj
         self.elastix = itk.ElastixRegistrationMethod.New(img_fix,img_move)
@@ -130,13 +132,21 @@ class sitkTile:
         return self.elastix.GetTransformParameterMap()[0]
         
     def warpVolume(self, vol_move, transform_map, res_move=None):
-        self.transformix.SetLogToConsole(True)
+        
         if res_move is None:
             res_move = self.resolution
             
-        self.transformix.SetTransformParameterMap(transform_map)
-        self.transformix.SetMovingImage(self.convertSitkImage(vol_move, res_move))
+        img_move = self.convertSitkImage(vol_move, res_move)
+            
+        # Set transformix obj
+        self.transformix = itk.TransformixFilter.New(img_move)
+        self.transformix.SetTransformParameterObject(transform_map)
+        self.transformix.SetLogToConsole(True)
+        
+        # Update object (required)
         self.transformix.UpdateLargestPossibleRegion()
         
-        out = sitk.GetArrayFromImage(self.transformix.GetResultImage())
+        # Results of Transformation
+        out = itk.GetArrayFromImage(self.transformix.GetOutput())
+        
         return out
