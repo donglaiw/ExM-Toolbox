@@ -115,3 +115,18 @@ def tiff2H5(tiff_file, h5_file, chunk_size=(100,1024,1024), step=100, im_thres=N
         ds[zi*step:z] = im
     fid.close()
 
+def nd2ToVol(filename: str, fov: int, channel_name: str = '405 SD'):
+    # volume in zyx order
+    ratio = 1
+    vol = ND2Reader(filename)
+    channel_names = vol.metadata['channels']
+    # print('Available channels:', channel_names)
+    channel_id = [x for x in range(len(channel_names)) if channel_name in channel_names[x]]
+    assert len(channel_id) == 1
+    channel_id = channel_id[0]
+
+    out = np.zeros([len(vol), vol[0].shape[0]//ratio , vol[0].shape[1] //ratio], np.uint16)
+    for z in range(len(vol)):
+        out[z] = vol.get_frame_2D(c=channel_id, t=0, z=z, x=0, y=0, v=fov)[::ratio,::ratio]
+    return out
+
