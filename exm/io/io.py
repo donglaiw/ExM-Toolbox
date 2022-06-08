@@ -130,3 +130,40 @@ def nd2ToVol(filename: str, fov: int, channel_name: str = '405 SD'):
         out[z] = vol.get_frame_2D(c=channel_id, t=0, z=z, x=0, y=0, v=fov)[::ratio,::ratio]
     return out
 
+def createFolderStruc(out_dir: str, code: str):
+    
+    ###################################################################
+    # USAGE: place the path of where you would like results to be saved
+    # in out_dir, along with date data were collected and code ########
+    ###################################################################
+    
+    if os.path.isdir(out_dir) is False:
+        os.makedirs(out_dir)
+    
+    code_dir = 'code{}'.format(code)
+    code_path = os.path.join(out_dir,code_dir)
+    
+    if os.path.isdir(code_path) is False:
+        os.makedirs(code_path)
+    
+    tform_dir = os.path.join(code_path, 'tforms')
+    
+    if os.path.isdir(tform_dir) is False:
+        os.makedirs(tform_dir)
+    
+    gif_parent_path = os.path.join(code_path, 'gifs')
+    
+    if os.path.isdir(gif_parent_path) is False:
+        os.makedirs(gif_parent_path)
+    
+    gif_dirs = ['xy','zy','zx']
+    
+    for gif_dir in gif_dirs:
+        
+        gif_path = os.path.join(gif_parent_path, gif_dir)
+        
+        if os.path.isdir(gif_path) is False:
+            os.makedirs(gif_path)
+    
+    print('creating paths done')
+
