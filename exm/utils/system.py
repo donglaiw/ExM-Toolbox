@@ -16,7 +16,7 @@ def get_args():
     parser.add_argument('--config-base', type=str,
                         help='base configuration file (yaml)', default=None)
     parser.add_argument('--mode', type=str,
-                        help='which step of processing pipeline to run', default='align')
+                        help='which step of pipeline to run', default='align')
     # Merge configs from command line (e.g., add 'SYSTEM.NUM_GPUS 8').
     parser.add_argument(
         "opts",

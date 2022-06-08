@@ -31,6 +31,7 @@ _C.DATASET = CN()
 # Dataset set paths, fov, and channel name
 _C.DATASET.VOL_FIX_PATH = 'path/to/vol_fix'
 _C.DATASET.VOL_MOVE_PATH = 'path/to/vol_move'
+_C.DATASET.OUTPUT_PATH = 'path/to/out_path'
 _C.DATASET.FOV = None
 _C.DATASET.CHANNEL = '405 SD'
 _C.DATASET.MASK_FIX_PATH = None
