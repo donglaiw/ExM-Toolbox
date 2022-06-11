@@ -1,7 +1,7 @@
 from platform import platform
 import itk
 import numpy as np
-import pyopencl as cl
+from numba import cuda
 
 class sitkTile:
     # 1. estimate transformation between input volumes
@@ -50,24 +50,25 @@ class sitkTile:
                 parameter_map['MaximumNumberOfIterations'] = ['10000']
             parameter_map['MaximumNumberOfSamplingAttempts'] = ['100']
             parameter_map['FinalBSplineInterpolationOrder'] = ['1']
-            #parameter_map['NumberOfResolutions'] = ['1']
+            parameter_map['NumberOfResolutions'] = ['1']
         else:
             parameter_map = itk.VectorOfParameterMap()
             for trans in transform_type:
                 parameter_map.append(self.createParameterMap(trans, num_iteration))
         if OpenCL == True:
             #set id
-            #parameter_map['OpenCLDeviceID'] = [str(cl.get_platforms()[0])]
-            #parameter_map['OpenCLDeviceID'] = ['0x562c55e3b630']
+            parameter_map['OpenCLDeviceID'] = ['0']
             #set resampler
             parameter_map['Resampler'] = ["OpenCLResampler"]
             parameter_map['OpenCLResamplerUseOpenCL'] = ["true"]
             #set pyramids
-            #parameter_map['FixedImagePyramid'] = ["OpenCLFixedGenericImagePyramid"]
-            #parameter_map['OpenCLFixedGenericImagePyramidUseOpenCL'] = ["true"]
+            parameter_map['FixedImagePyramid'] = ["OpenCLFixedGenericImagePyramid"]
+            parameter_map['OpenCLFixedGenericImagePyramidUseOpenCL'] = ["true"]
 
-            #parameter_map['OpenCLMovingGenericImagePyramidUseOpenCL'] = ["true"]
-            #parameter_map['MovingImagePyramid'] = ["OpenCLMovingGenericImagePyramid"]
+            parameter_map['OpenCLMovingGenericImagePyramidUseOpenCL'] = ["true"]
+            parameter_map['MovingImagePyramid'] = ["OpenCLMovingGenericImagePyramid"]
+
+            parameter_map['Transform'] = ["GPUEuler3DTransform"]
             
         parameter_object.AddParameterMap(parameter_map)
         
@@ -91,6 +92,8 @@ class sitkTile:
         mask = np.asarray(vol > thrsh, 'uint8')
         return mask
     
+
+    @cuda.jit
     def computeTransformMap(self, vol_fix, vol_move, res_fix=None, res_move=None, mask_fix=None, mask_move=None):
         # work with mask correctly
         # https://github.com/SuperElastix/SimpleElastix/issues/198
@@ -128,8 +131,9 @@ class sitkTile:
         self.elastix.UpdateLargestPossibleRegion()
         
         # 4. output transformation parameter
-        return self.elastix.GetTransformParameterMap()
-        
+        return self.elastix.GetTransformParameterObject()
+    
+    @cuda.jit 
     def warpVolume(self, vol_move, transform_map, res_move=None):
         
         if res_move is None:
