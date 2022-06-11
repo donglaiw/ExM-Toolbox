@@ -72,7 +72,8 @@ class sitkTile:
         # https://github.com/SuperElastix/SimpleElastix/issues/198
         # not enough samples in the mask
         #self.elastix.SetLogToConsole(False)
-        self.elastix.SetLogToConsole(True)
+        #self.elastix.SetLogToConsole(True)
+        self.elastix.LogToFileOn()
         if res_fix is None:
             res_fix = self.resolution
         if res_move is None:
