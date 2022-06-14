@@ -33,6 +33,13 @@ class datasetTile:
     def setResult(self, result):
         self.vol_h5 = result
 
+    def setMasks(self, mask_fix, mask_move = None):
+        
+        self.mask_fix = mask_fix
+
+        if mask_move is not None:
+            self.mask_move = mask_move
+
     def saveH5(self, vol_save, vol_path: str, channel: str):
 
         if os.path.exists(vol_path):

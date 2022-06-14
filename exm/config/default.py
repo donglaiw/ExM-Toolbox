@@ -22,6 +22,10 @@ _C.ALIGN = CN()
 _C.ALIGN.RESOLUION = [1.625,1.625,4.0]
 _C.ALIGN.TRANSFORM_TYPE = ['rigid']
 _C.ALIGN.NUM_ITERATION = -1
+_C.ALIGN.NumberOfSamplesForExactGradient = '100000'
+_C.ALIGN.MaximumNumberOfIterations = '10000'
+_C.ALIGN.MaximumNumberOfSamplingAttempts = '100'
+_C.ALIGN.FinalBSplineInterpolationOrder = '1'
 
 # -----------------------------------------------------------------------------
 # Dataset
@@ -35,6 +39,12 @@ _C.DATASET.OUTPUT_PATH = 'path/to/out_path'
 _C.DATASET.FOV = None
 _C.DATASET.CHANNEL = '405 SD'
 _C.DATASET.MASK_FIX_PATH = None
+_C.DATASET.MASK_MOV_PATH = None
+
+# -----------------------------------------------------------------------------
+# Dataset
+# -----------------------------------------------------------------------------
+_C.DATASET = CN()
 
 def get_cfg_defaults():
     r"""Get a yacs CfgNode object with default values for my_project."""
