@@ -10,7 +10,7 @@ class datasetTile:
         self.vol_h5 = None
         self.fov = None
     
-    def loadVols(self, fov: int, vol_fix_path: str, vol_mov_path: str, channel: str = '405', result_path: str = None):
+    def loadVols(self, fov: int, vol_fix_path: str, vol_mov_path: str, channel: str, result_path: str = None):
         
         if fov:
             self.fov = fov
@@ -30,14 +30,17 @@ class datasetTile:
     
         return self.vol_fix, self.vol_move, self.vol_h5
 
-    def saveH5(self, vol_save, vol_path: str, channel: str = '405'):
+    def setResult(self, result):
+        self.vol_h5 = result
+
+    def saveH5(self, vol_save, vol_path: str, channel: str):
 
         if os.path.exists(vol_path):
-            with h5py.File(str, 'r+') as f:
+            with h5py.File(vol_path, 'r+') as f:
                 f.create_dataset(channel, vol_save.shape, compression="gzip", dtype=vol_save.dtype, data = vol_save)
 
         else:
-            with h5py.File(str, 'w') as f:
+            with h5py.File(vol_path, 'w') as f:
                 f.create_dataset(channel, vol_save.shape, compression="gzip", dtype=vol_save.dtype, data = vol_save)
 
     
