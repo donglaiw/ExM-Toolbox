@@ -15,6 +15,9 @@ class sitkTile:
         self.resolution = resolution
 
     #### Setup
+    def setLogPath(self,path):
+        self.elastix.SetOutputDirectory(path)
+    
     def setTransformType(self, transform_type, num_iteration = -1, OpenCL = False):
         self.transform_type = transform_type
         self.parameter_map = self.createParameterMap(transform_type, num_iteration, OpenCL)
@@ -51,9 +54,6 @@ class sitkTile:
             parameter_map = sitk.VectorOfParameterMap()
             for trans in transform_type:
                 parameter_map.append(self.createParameterMap(trans, num_iteration))
-        if OpenCL == True:
-            parameter_map['Resampler'] = ["OpenCLResampler"]
-            parameter_map['OpenCLResamplerUseOpenCL'] = ["true"]
         return parameter_map
 
     #### Estimate and warp with transformation
@@ -72,7 +72,8 @@ class sitkTile:
         # https://github.com/SuperElastix/SimpleElastix/issues/198
         # not enough samples in the mask
         #self.elastix.SetLogToConsole(False)
-        self.elastix.SetLogToConsole(True)
+        #self.elastix.SetLogToConsole(True)
+        self.elastix.LogToFileOn()
         if res_fix is None:
             res_fix = self.resolution
         if res_move is None:
