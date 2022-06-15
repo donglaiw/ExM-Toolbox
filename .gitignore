@@ -1,4 +1,6 @@
 .ipynb_checkpoints
 exm.egg-info/
 exm/align/__pycache__
+exm/io/__pycache__
+Simple*
 *.pyc
