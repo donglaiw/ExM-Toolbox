@@ -1,4 +1,4 @@
-from ..io.io import nd2ToVol
+from pims import ND2_Reader
 import h5py
 import os
 
@@ -8,20 +8,47 @@ class datasetTile:
         self.vol_fix = None
         self.vol_move = None
         self.vol_h5 = None
-        self.fov = None
     
-    def loadVols(self, fov: int, vol_fix_path: str, vol_mov_path: str, channel: str, result_path: str = None):
-        
-        if fov:
-            self.fov = fov
+    def loadVols(self, vol_fix_path: str, vol_mov_path: str, channel: str = None, result_path: str = None, iter_axes: str = None):
 
         if '.nd2' in vol_fix_path:
-            self.vol_fix = nd2ToVol(vol_fix_path, self.fov, channel+' SD')
+
+            vol_fix = ND2_Reader(vol_fix_path)
+
+            if iter_axes:
+                vol_fix.iter_axes = iter_axes
+
+            else:
+                axes = ['x','y','z']
+                iter_axes = set(vol_fix.sizes.keys()) - set(axes)
+
+                assert len(iter_axes) == 1, "can only set one iter axis, should be channel or fov"
+
+                vol_fix.iter_axes = iter_axes
+    
+            self.vol_fix = vol_fix
+
+        if '.nd2' in vol_mov_path:
+
+            vol_mov = ND2_Reader(vol_mov_path)
+
+            if iter_axes:
+                vol_mov.iter_axes = iter_axes
+
+            else:
+                axes = ['x','y','z']
+                iter_axes = set(vol_mov.sizes.keys()) - set(axes)
+
+                assert len(iter_axes) == 1, "can only set one iter axis, should be channel or fov"
+
+                vol_mov.iter_axes = iter_axes
+    
+            self.vol_mov = vol_mov
+
+
         elif '.h5' in vol_fix_path:
             self.vol_fix = h5py.File(vol_fix_path, 'r')[channel]
 
-        if '.nd2' in vol_mov_path:
-            self.vol_move = nd2ToVol(vol_mov_path, self.fov, channel+' SD')
         elif '.h5' in vol_mov_path:
             self.vol_move = h5py.File(vol_mov_path, 'r')[channel]
 
