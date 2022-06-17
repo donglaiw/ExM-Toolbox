@@ -1,30 +1,26 @@
 from .base import RunnerBase
 from yacs.config import CfgNode
-from ..align.sitk_tile import sitkTile
+from ..align.build import buildSitkTile
 from ..data.build import get_dataset
 
-class Runner(RunnerBase):
+class Runner:
 
     def __init__(self, 
                 cfg: CfgNode,
                 mode: str = 'align'):
+
+        self.cfg = cfg
+
+        self.fix_vol, self.mov_vol = get_dataset(self.cfg)
+        self.align = buildSitkTile(self.cfg)
         
-        self.init_basics(cfg, mode)
+    def runAlign(self, save_result = True):
 
-        self.dataset = get_dataset(self.cfg)
+        tform = self.align.computeTransformMap(self.fix_vol, self.mov_vol)
+        result = self.align.warpVolume(self.mov_vol, tform)
 
-        if self.args.mode == 'align':
-            self.align = sitkTile()
-            self.align.setResolution()
-            self.align.setTransformType()
-        
-    def runAlign(self):
+        return result
 
-        tform = self.align.computeTransformMap(self.dataset)
-        result = self.align.warpVolume(self.dataset.vol_move, tform)
-        self.dataset.setResult(result)
-
-        return self.dataset
 
 
 

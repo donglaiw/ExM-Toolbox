@@ -36,8 +36,9 @@ _C.DATASET = CN()
 _C.DATASET.VOL_FIX_PATH = 'path/to/vol_fix'
 _C.DATASET.VOL_MOVE_PATH = 'path/to/vol_move'
 _C.DATASET.OUTPUT_PATH = 'path/to/out_path'
+_C.DATASET.ITER_AXES = 'v'
 _C.DATASET.FOV = None
-_C.DATASET.CHANNEL = '405 SD'
+_C.DATASET.CHANNEL = None
 _C.DATASET.MASK_FIX_PATH = None
 _C.DATASET.MASK_MOV_PATH = None
 

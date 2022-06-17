@@ -2,12 +2,13 @@ from nd2reader import ND2Reader
 import h5py
 import os
 
-class datasetTile:
+class datasetVolume:
 
     def __init__(self):
         self.vol = None
+        self.mask = None
     
-    def loadVols(self, vol_path: str, iter_axes: str = 'v', channel: str = None):
+    def loadVol(self, vol_path: str, iter_axes: str = 'v', fov: int = None, channel: str = None):
 
         if '.nd2' in vol_path:
 
@@ -16,6 +17,9 @@ class datasetTile:
 
             if iter_axes:
                 vol.iter_axes = iter_axes
+            
+            if fov:
+                self.vol = vol[fov]
     
             self.vol = vol
 
@@ -24,12 +28,10 @@ class datasetTile:
     
         return self.vol
 
-    def setMasks(self, mask_fix, mask_move = None):
-        
-        self.mask_fix = mask_fix
+    def setMasks(self, mask = None):
 
-        if mask_move is not None:
-            self.mask_move = mask_move
+        if mask is not None:
+            self.mask = mask
 
     def saveH5(self, vol_save, vol_path: str, channel: str):
 

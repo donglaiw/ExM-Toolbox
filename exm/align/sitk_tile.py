@@ -20,7 +20,7 @@ class sitkTile:
         if resolution is not None:
             self.resolution = resolution
         else: 
-            self.resolution = self.cfg.DATASET.RESOLUTION
+            self.resolution = self.cfg.ALIGN.RESOLUTION
 
     #### Setup
     def setTransformType(self, transform_type = None, num_iteration = None):
@@ -28,12 +28,12 @@ class sitkTile:
         if transform_type is not None:
             self.transform_type = transform_type
         else:
-            self.transform_type = self.cfg.DATASET.TRANSFORM_TYPE
+            self.transform_type = self.cfg.ALIGN.TRANSFORM_TYPE
 
         if num_iteration is not None:
             self.num_iteration = num_iteration
         else:
-            self.num_iteration = self.cfg.DATASET.NUM_ITERATION
+            self.num_iteration = self.cfg.ALIGN.NUM_ITERATION
 
         self.parameter_map = self.createParameterMap(self.transform_type, self.num_iteration)
         self.elastix.SetParameterMap(self.parameter_map)
@@ -95,7 +95,7 @@ class sitkTile:
         mask = np.asarray(vol > thrsh, 'uint8')
         return mask
     
-    def computeTransformMap(self, dataset, res_fix=None, res_move=None):
+    def computeTransformMap(self, vol_fix, vol_move, res_fix=None, res_move=None):
         # work with mask correctly
         # https://github.com/SuperElastix/SimpleElastix/issues/198
         # not enough samples in the mask
@@ -110,19 +110,19 @@ class sitkTile:
 
         # 2. load volume
         # print('vol-fix shape:', vol_fix.shape)
-        vol_fix = self.convertSitkImage(dataset.vol_fix, res_fix)
+        vol_fix = self.convertSitkImage(vol_fix, res_fix)
         self.elastix.SetFixedImage(vol_fix)
 
-        if dataset.mask_fix is not None:
+        if vol_fix.mask is not None:
             self.elastix.SetParameter("ImageSampler", "RandomSparseMask")
-            mask_fix = self.convertSitkImage(dataset.mask_fix, res_fix)
+            mask_fix = self.convertSitkImage(mask_fix, res_fix)
             mask_fix.CopyInformation(vol_fix)
             self.elastix.SetFixedMask(mask_fix)
 
         vol_move = self.convertSitkImage(dataset.vol_move, res_move)
         self.elastix.SetMovingImage(vol_move)
 
-        if dataset.mask_move is not None:
+        if vol_move.mask is not None:
             #self.elastix.SetParameter("ImageSampler", "RandomSparseMask")
             mask_move = self.convertSitkImage(dataset.mask_move, res_move)
             mask_move.CopyInformation(vol_move)

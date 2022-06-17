@@ -1,10 +1,18 @@
-from .dataset_tile import datasetTile
+from .dataset_volume import datasetVolume
 
 
-def get_dataset (cfg, dataset_class = datasetTile()):
+def get_dataset (cfg, dataset_class = datasetVolume):
 
-    dataset = dataset_class.loadVols(fov = cfg.DATASET.FOV, 
-                                    vol_fix_path = cfg.DATASET.VOL_FIX_PATH,
-                                    vol_mov_path = cfg.DATASET.VOL_MOV_PATH,
+    fix_dset = dataset_class()
+    fix_dset.loadVol(vol_fix_path = cfg.DATASET.VOL_FIX_PATH,
+                                    iter_axes = cfg.DATASET.ITER_AXES,
+                                    fov = cfg.DATASET.FOV,
                                     channel = cfg.DATASET.CHANNEL)
-    return dataset
+    
+    move_dset = dataset_class()
+    move_dset.loadVol(vol_fix_path = cfg.DATASET.VOL_MOVE_PATH,
+                                    iter_axes = cfg.DATASET.ITER_AXES,
+                                    fov = cfg.DATASET.FOV,
+                                    channel = cfg.DATASET.CHANNEL)
+    
+    return fix_dset, move_dset
