@@ -12,6 +12,7 @@ class datasetTile:
         if '.nd2' in vol_path:
 
             vol = ND2Reader(vol_path)
+            vol.bundle_axes = 'zyx' #nd2 format
 
             if iter_axes:
                 vol.iter_axes = iter_axes
