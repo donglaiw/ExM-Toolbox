@@ -3,7 +3,7 @@ import SimpleITK as sitk
 from yacs.config import CfgNode
 
 
-def buildSitkTile(cfg, sitkTile = sitkTile(), transform_type = None, num_iteration = None):
+def buildSitkTile(cfg: CfgNode, sitkTile = sitkTile(), transform_type = None, num_iteration = None):
 
     sitkTile.setResolution()
 
@@ -15,7 +15,7 @@ def buildSitkTile(cfg, sitkTile = sitkTile(), transform_type = None, num_iterati
 
 
 
-def createParameterMap(cfg, transform_type = None, num_iteration = None):
+def createParameterMap(cfg: CfgNode, transform_type = None, num_iteration = None):
 
     if transform_type is None:
         transform_type = cfg.ALIGN.TRANSFORM_TYPE

@@ -2,7 +2,7 @@ import os
 import warnings
 import argparse
 from yacs.config import CfgNode
-from .defaults import get_cfg_defaults
+from .default import get_cfg_defaults
 
 # Taken shamelessly from Zudi Lin's pytorch connectomics lib:https://github.com/zudi-lin/pytorch_connectomics/blob/master/connectomics/config/utils.py
 

@@ -1,7 +1,7 @@
 from .dataset_volume import datasetVolume
 
 
-def get_dataset (cfg, dataset_class = datasetVolume):
+def getDataset (cfg, dataset_class = datasetVolume):
 
     fix_dset = dataset_class()
     fix_dset.loadVol(vol_fix_path = cfg.DATASET.VOL_FIX_PATH,
