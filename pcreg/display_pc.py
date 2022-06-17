@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 import plotly.express as px
 from plotly.subplots import make_subplots
@@ -7,38 +8,40 @@ import plotly.graph_objects as go
 Plot 200 random points (fixed cloud) and their
 nearest neighbors in the moving cloud
 '''
-n = 200
-nn_idx = []
 
-X_mov_nn = np.zeros((n, 3))
-X_reg_nn = np.zeros((n, 3))
-X_fix_rand = np.zeros((n, 3))
-idx = np.random.choice(X_fix.shape[0], n, replace=False)
+def find_nn(n, X_fix, X_mov):
+    """
+    args:   n     -> number of random points
+            X_fix -> fixed cloud coordinates
+            X_mov -> moving cloud coordinates
 
+    returns the coordinates of the nearest neighbors
+    """
+    nn_idx = []
+    X_mov_nn = np.zeros((n, 3))
+    idx = np.random.choice(X_fix.shape[0], n, replace=False)
 
-# 200 random points
-for i in range(n):
-    X_fix_rand[i] = X_fix[idx[i]]
+    for i in range(n):
+        X_fix_rand[i] = X_fix[idx[i]]
 
+    # find index of nearest neighbors
+    for i in range(n):
+        dist_list = []
+        pt1 = X_fix_rand[i]
+        min_dist = math.inf
 
-# find nearest neighbors index
-for i in range(n):
-    dist_list = []
-    pt1 = X_fix_rand[i]
+        for j in range(n):
+            pt2 = X_mov[j]
+            dist = np.sqrt(np.sum(np.square(pt2-pt1)))
+            dist_list.append(dist)
 
-    min_dist = 99999999999999999
-    for j in range(n):
-        pt2 = X_mov_transformed[j]
-        dist = np.sqrt(np.sum(np.square(pt2-pt1)))
-        dist_list.append(dist)
+        for idx in range(n):
+            if(dist_list[idx] == min(dist_list)):
+                nn_idx.append(idx)
 
-    for idx in range(n):
-        if(dist_list[idx] == min(dist_list)):
-            nn_idx.append(idx)
-
-# nearest neighbour coordinates
-for i in range(n):
-    X_reg_nn[i] = X_mov_transformed[nn_idx[i]]
+    # get nearest neighbor coordinates
+    for i in range(n):
+        X_mov_nn[i] = X_mov[j]
 
 
 '''
@@ -67,7 +70,7 @@ def plot_overlap(X_fix_rand, X_mov_nn, X_reg_nn):
 
 
 # plot n pts (otherwise there's too much clutter)
-def plot_adjacent(X_fix, X_mov, n):
+def plot_adjacent(X_fix, X_mov_, n):
     fig = make_subplots(rows=1, cols=2,
                     specs=[[{"type": "scene"}, {"type": "scene"}]],)
 
