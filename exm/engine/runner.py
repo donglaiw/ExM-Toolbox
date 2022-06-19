@@ -1,22 +1,25 @@
 from yacs.config import CfgNode
-from ..align.build import buildSitkTile
+from ..align.build import alignBuild
 from ..data.build import getDataset
 
 class Runner:
 
-    def __init__(self, 
-                cfg: CfgNode,
-                mode: str = 'align'):
+    def __init__(self):
+
+        self.cfg = None
+        self.align = None
+        
+    def runAlign(self, cfg: CfgNode):
 
         self.cfg = cfg
 
-        self.fix_vol, self.mov_vol = getDataset(self.cfg)
+        fix_vol, mov_vol = getDataset(self.cfg)
         
-        self.align = buildSitkTile(self.cfg)
-        
-    def runAlign(self, save_result = True):
+        self.align = alignBuild(self.cfg)
 
-        tform = self.align.computeTransformMap(self.fix_vol, self.mov_vol)
-        result = self.align.warpVolume(self.mov_vol, tform)
+        self.align.buildSitkTile(self.cfg)
+
+        tform = self.align.computeTransformMap(fix_vol, mov_vol, mask_fix = fix_vol.mask, mask_move = mov_vol.mask)
+        result = self.align.warpVolume(mov_vol, tform)
 
         return tform, result

@@ -19,7 +19,7 @@ _C.SYSTEM = CN()
 _C.ALIGN = CN()
 
 # Alignment set up parameters
-_C.ALIGN.RESOLUION = [1.625,1.625,4.0]
+_C.ALIGN.RESOLUTION = [1.625,1.625,4.0]
 _C.ALIGN.TRANSFORM_TYPE = ['rigid']
 _C.ALIGN.NUM_ITERATION = -1
 _C.ALIGN.NumberOfSamplesForExactGradient = '100000'
@@ -42,10 +42,6 @@ _C.DATASET.CHANNEL = None
 _C.DATASET.MASK_FIX_PATH = None
 _C.DATASET.MASK_MOV_PATH = None
 
-# -----------------------------------------------------------------------------
-# Dataset
-# -----------------------------------------------------------------------------
-_C.DATASET = CN()
 
 def get_cfg_defaults():
     r"""Get a yacs CfgNode object with default values for my_project."""

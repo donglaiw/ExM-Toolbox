@@ -6,17 +6,15 @@ from .default import get_cfg_defaults
 
 # Taken shamelessly from Zudi Lin's pytorch connectomics lib:https://github.com/zudi-lin/pytorch_connectomics/blob/master/connectomics/config/utils.py
 
-def load_cfg(args: argparse.Namespace, freeze=True, add_cfg_func=None):
+def load_cfg(config_file = None, freeze=True, add_cfg_func=None):
     """Load configurations.
     """
     # Set configurations
     cfg = get_cfg_defaults()
     if add_cfg_func is not None:
         add_cfg_func(cfg)
-    if args.config_base is not None:
-        cfg.merge_from_file(args.config_base)
-    cfg.merge_from_file(args.config_file)
-    cfg.merge_from_list(args.opts)
+    if config_file is not None:
+        cfg.merge_from_file(config_file)
 
     if freeze:
         cfg.freeze()
