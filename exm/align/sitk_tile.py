@@ -99,8 +99,7 @@ class sitkTile:
         # work with mask correctly
         # https://github.com/SuperElastix/SimpleElastix/issues/198
         # not enough samples in the mask
-        #self.elastix.SetLogToConsole(False)
-
+        self.elastix.SetLogToConsole(False)
         self.elastix.LogToFileOn()
 
         if res_fix is None:
@@ -136,6 +135,7 @@ class sitkTile:
         
     def warpVolume(self, vol_move, transform_map, res_move=None):
 
+        self.transformix.SetLogToConsole(False)
         self.transformix.LogToFileOn()
 
         if res_move is None:
