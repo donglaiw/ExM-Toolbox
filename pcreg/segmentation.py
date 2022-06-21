@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import cc3d
+import numpy as np
 from skimage.measure import label
 from skimage.measure import regionprops
 from skimage.measure import label2rgb
@@ -30,4 +31,21 @@ def connected_components(img, delta, arr_type):
     seg = np.array(img).astype(arr_type)
     labels_out = cc3d.connected_components(seg, delta=delta)
     return labels_out
+
+
+def get_centroids(seg_labels):
+    '''
+    Determine the centroid from a given 3D segment mask
+    args:   seg_labels -> 3D segmentation labels
+    returns: a matrix of 3D centroids of the segment mask
+    '''
+    props = regionprops(seg_labels)
+
+    # restricted to 3D points
+    pts = np.zeros(shape=(len(props), 3))
+
+    for i in range(len(props)):
+        pts[i] = np.asarray(getattr((props[i]), 'centroid'))
+
+    return pts
 
