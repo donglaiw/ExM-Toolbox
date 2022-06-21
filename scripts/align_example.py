@@ -19,7 +19,7 @@ cfg.freeze()
 # init runner obj and run align
 
 run = Runner()
-result, tform = run.runAlign(cfg)
+tform, result = run.runAlign(cfg)
 
 t_end = time()
 
