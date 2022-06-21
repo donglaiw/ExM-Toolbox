@@ -43,6 +43,7 @@ def find_nn(n, X_fix, X_mov):
     for i in range(n):
         X_mov_nn[i] = X_mov[j]
 
+    return X_mov_nn
 
 '''
 Plot points
