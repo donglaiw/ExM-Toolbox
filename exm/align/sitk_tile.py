@@ -95,7 +95,7 @@ class sitkTile:
         mask = np.asarray(vol > thrsh, 'uint8')
         return mask
     
-    def computeTransformMap(self, vol_fix, vol_move, res_fix=None, res_move=None, mask_fix=None, mask_move=None):
+    def computeTransformMap(self, fix_dset, move_dset, res_fix=None, res_move=None, mask_fix=None, mask_move=None):
         # work with mask correctly
         # https://github.com/SuperElastix/SimpleElastix/issues/198
         # not enough samples in the mask
@@ -110,22 +110,22 @@ class sitkTile:
 
         # 2. load volume
         # print('vol-fix shape:', vol_fix.shape)
-        vol_fix = self.convertSitkImage(vol_fix, res_fix)
+        vol_fix = self.convertSitkImage(fix_dset, res_fix)
         self.elastix.SetFixedImage(vol_fix)
 
-        if vol_fix.mask is not None:
+        if mask_fix is not None:
             self.elastix.SetParameter("ImageSampler", "RandomSparseMask")
-            mask_fix = self.convertSitkImage(vol_fix.mask, res_fix)
-            mask_fix.CopyInformation(vol_fix.vol)
+            mask_fix = self.convertSitkImage(mask_fix, res_fix)
+            mask_fix.CopyInformation(vol_fix)
             self.elastix.SetFixedMask(mask_fix)
 
-        vol_move = self.convertSitkImage(vol_fix, res_move)
+        vol_move = self.convertSitkImage(move_dset, res_move)
         self.elastix.SetMovingImage(vol_move)
 
-        if vol_move.mask is not None:
+        if mask_move is not None:
             #self.elastix.SetParameter("ImageSampler", "RandomSparseMask")
-            mask_move = self.convertSitkImage(vol_move.mask, res_move)
-            mask_move.CopyInformation(vol_move.vol)
+            mask_move = self.convertSitkImage(mask_move, res_move)
+            mask_move.CopyInformation(vol_move)
             self.elastix.SetMovingMask(mask_move)
             
         # 3. compute transformation

@@ -15,11 +15,11 @@ class datasetVolume:
             vol = ND2Reader(vol_path)
             vol.bundle_axes = 'zyx' #nd2 format
 
-            if iter_axes:
+            if iter_axes is not None:
                 vol.iter_axes = iter_axes
             
-            if fov:
-                self.vol = vol[fov]
+            if fov is not None:
+                vol = vol[fov]
     
             self.vol = vol
 
