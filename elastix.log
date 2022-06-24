@@ -40411,3 +40411,14 @@ Settings of AdaptiveStochasticGradientDescent in resolution 3:
 Creating the TransformParameterFile took 0.00s
 
 Registration result checksum: 2335094841
+
+Final metric value  = -0.010344
+Settings of AdaptiveStochasticGradientDescent for all resolutions:
+( SP_a 55884.218842 4573.661522 2452.133332 2877.038348 )
+( SP_A 20.000000 20.000000 20.000000 20.000000 )
+( SP_alpha 1.000000 1.000000 1.000000 1.000000 )
+( SigmoidMax 1.000000 1.000000 1.000000 1.000000 )
+( SigmoidMin -0.510897 -0.964994 -0.970253 -0.972293 )
+( SigmoidScale 0.000000 0.000000 0.000000 0.000000 )
+
+Time spent on saving the results, applying the final transform etc.: 513574 ms.

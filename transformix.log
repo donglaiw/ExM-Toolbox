@@ -1,0 +1,14 @@
+Installing all components.
+InstallingComponents was successful.
+
+ELASTIX version: 5.000
+Command line options from ElastixBase:
+-out      ./
+-threads  unspecified, so all available threads are used
+-def      unspecified, so no input points transformed
+-jac      unspecified, so no det(dT/dx) computed
+-jacmat   unspecified, so no dT/dx computed
+
+Reading input image ...
+  Reading input image took 0.000024 s
+Calling all ReadFromFile()'s ...
