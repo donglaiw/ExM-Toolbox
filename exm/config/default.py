@@ -21,6 +21,7 @@ _C.ALIGN = CN()
 # Alignment set up parameters
 _C.ALIGN.RESOLUTION = [1.625,1.625,4.0]
 _C.ALIGN.TRANSFORM_TYPE = ['rigid']
+_C.ALIGN.TYPE = 'intensity'
 #_C.ALIGN.NUM_ITERATION = -1
 _C.ALIGN.NumberOfSamplesForExactGradient = '100000'
 _C.ALIGN.MaximumNumberOfIterations = '10000'
