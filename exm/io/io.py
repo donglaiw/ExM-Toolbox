@@ -7,7 +7,7 @@ import statistics
 from tifffile import imread
 from .image import imAdjust
 from PIL import Image
-import skimage
+import skimage.measure
 
 def mkdir(fn,opt=0):
     if opt == 1 :# until the last /
