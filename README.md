@@ -16,7 +16,7 @@ conda activate exm-toolbox
 git clone https://github.com/SuperElastix/SimpleElastix
 mkdir SimpleElastix_build
 cd SimpleElastix_build
-cmake ../SimpleElastix/SuperBuild
+cmake3 ../SimpleElastix/SuperBuild
 # can take hours to compile)
 # -j4: 4 threads. do as many threads as needed
 make -j4

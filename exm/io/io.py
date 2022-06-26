@@ -7,6 +7,7 @@ import statistics
 from tifffile import imread
 from .image import imAdjust
 from PIL import Image
+import skimage
 
 def mkdir(fn,opt=0):
     if opt == 1 :# until the last /
@@ -167,3 +168,12 @@ def createFolderStruc(out_dir: str, code: str):
     
     print('creating paths done')
 
+def downsample(arr, block_size):
+    block_tup = (block_size)
+    block = ((block_tup, ) * arr.ndim)
+
+    assert len(block) == arr.ndim, "block size does not match vector shape"
+
+    new_array = skimage.measure.block_reduce(arr, block, np.mean)
+
+    return new_array
