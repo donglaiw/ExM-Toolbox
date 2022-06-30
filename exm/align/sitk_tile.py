@@ -1,6 +1,7 @@
 import SimpleITK as sitk
 import numpy as np
 from yacs.config import CfgNode
+import cv2 as cv
 
 
 class sitkTile:
@@ -90,9 +91,24 @@ class sitkTile:
 
         return vol
     
-    def computeMask(vol, percentile = 70):
-        thrsh = np.percentile(vol, percentile)
-        mask = np.asarray(vol > thrsh, 'uint8')
+    def compute_mask_cv(img, sigma = 2, thrsh = 200, kernel_size = 100):
+    
+        mask = np.zeros(img.shape)
+
+        kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,(kernel_size,kernel_size))
+
+        for ind, z in enumerate(img):
+            # compute gaussian blur
+            gaus = gaussian_filter(z, sigma = sigma)
+            # binarize img
+            binary = np.asarray(gaus > thrsh)
+            #get convex hull
+            hull = convex_hull_image(binary)
+            #dilate
+            dilation = cv.dilate(hull.astype('uint8'), kernel, iterations = 3)
+
+            mask[ind, :, :] = dilation
+    
         return mask
     
     def computeTransformMap(self, fix_dset, move_dset, res_fix=None, res_move=None, mask_fix=None, mask_move=None):

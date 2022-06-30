@@ -169,9 +169,9 @@ def createFolderStruc(out_dir: str, code: str):
     print('creating paths done')
 
 def downsample(arr, block_size):
-    block_tup = (block_size)
-    block = ((block_tup, ) * arr.ndim)
-
+    block_list = [block_size]*arr.ndim
+    block_list[0] = block_size // 2
+    block = tuple(block_list)
     assert len(block) == arr.ndim, "block size does not match vector shape"
 
     new_array = skimage.measure.block_reduce(arr, block, np.mean)
