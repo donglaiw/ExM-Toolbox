@@ -170,7 +170,6 @@ def createFolderStruc(out_dir: str, code: str):
 
 def downsample(arr, block_size):
     block_list = [block_size]*arr.ndim
-    block_list[0] = block_size // 2
     block = tuple(block_list)
     assert len(block) == arr.ndim, "block size does not match vector shape"
 

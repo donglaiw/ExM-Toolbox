@@ -8,6 +8,7 @@ class alignBuild(sitkTile):
 
         self.cfg = cfg
         self.transform_type = self.cfg.ALIGN.TRANSFORM_TYPE
+        self.parameter_map = None
 
         sitkTile.__init__(self, self.cfg)
 
@@ -41,6 +42,6 @@ class alignBuild(sitkTile):
 
         self.setResolution()
 
-        parameter_map = self.createParameterMap()
+        self.parameter_map = self.createParameterMap()
 
-        self.elastix.SetParameterMap(parameter_map)
+        self.elastix.SetParameterMap(self.parameter_map)

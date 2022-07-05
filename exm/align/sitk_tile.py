@@ -163,22 +163,29 @@ class sitkTile:
         out = sitk.GetArrayFromImage(self.transformix.GetResultImage())
         return out
     
-    def localToGlobalTform(self, fix, mov, ROI_min_fix: list, ROI_max_fix: list, ROI_min_mov: list, ROI_max_mov):
+    def localToGlobalTform(self, fix, mov, resolution: list, ROI_min_fix: list, ROI_max_fix: list, ROI_min_mov: list, ROI_max_mov):
+        
+        assert resolution[0] == resolution[1], "x and y size are not identical, resolution must be in x,y,z order"
         
         f_crop = fix[ROI_min_fix[0]:ROI_max_fix[0],ROI_min_fix[1]:ROI_max_fix[1],ROI_min_fix[2]:ROI_max_fix[2]]
         m_crop = mov[ROI_min_mov[0]:ROI_max_mov[0],ROI_min_mov[1]:ROI_max_mov[1],ROI_min_mov[2]:ROI_max_mov[2]]
 
         tform = self.computeTransformMap(f_crop,m_crop)
         
-        x_glob = str((ROI_max_mov[2] + ROI_min_mov[2]) / 2 * 1.625)
-        y_glob = str((ROI_max_mov[1] + ROI_min_mov[1]) / 2 * 1.625)
-        z_glob = str((ROI_max_mov[0] + ROI_min_mov[0]) / 2 * 4.0)
+        x_glob = str((ROI_max_mov[2] + ROI_min_mov[2]) / 2 * resolution[0])
+        y_glob = str((ROI_max_mov[1] + ROI_min_mov[1]) / 2 * resolution[1])
+        z_glob = str((ROI_max_mov[0] + ROI_min_mov[0]) / 2 * resolution[2])
         
         tform['CenterOfRotationPoint'] = (x_glob,y_glob,z_glob)
         tform['Size'] = (str(mov.shape[2]),str(mov.shape[1]),str(mov.shape[0]))
         
         params = list(tform['TransformParameters'])
+        #set z
         params[-1] = str(float(tform['TransformParameters'][-1])-(4*(ROI_min_fix[0]-ROI_min_mov[0])))
+        #set y
+        params[-2] = str(float(tform['TransformParameters'][-2])-(1.625*(ROI_min_fix[1]-ROI_min_mov[1])))
+        #set x
+        params[-3] = str(float(tform['TransformParameters'][-3])-(1.625*(ROI_min_fix[2]-ROI_min_mov[2])))
         
         tform['TransformParameters'] = tuple(params)
         
