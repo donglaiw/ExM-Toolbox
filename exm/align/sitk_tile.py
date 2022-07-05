@@ -149,10 +149,11 @@ class sitkTile:
         # 4. output transformation parameter
         return self.elastix.GetTransformParameterMap()[0]
         
-    def warpVolume(self, vol_move, transform_map, res_move=None):
-
-        self.transformix.SetLogToConsole(False)
-        self.transformix.LogToFileOn()
+    def warpVolume(self, vol_move, transform_map, res_move=None, log = 'console'):
+        if log == 'console':
+            self.transformix.SetLogToConsole(True)
+        else:
+            self.transformix.LogToFileOn()
 
         if res_move is None:
             res_move = self.resolution
@@ -163,7 +164,10 @@ class sitkTile:
         out = sitk.GetArrayFromImage(self.transformix.GetResultImage())
         return out
     
-    def localToGlobalTform(self, fix, mov, resolution: list, ROI_min_fix: list, ROI_max_fix: list, ROI_min_mov: list, ROI_max_mov):
+    def localToGlobalTform(self, fix, mov, ROI_min_fix: list, ROI_max_fix: list, ROI_min_mov: list, ROI_max_mov, resolution: list = None):
+        
+        if resolution is None:
+            resolution = self.resolution
         
         assert resolution[0] == resolution[1], "x and y size are not identical, resolution must be in x,y,z order"
         
