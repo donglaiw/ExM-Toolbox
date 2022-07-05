@@ -180,12 +180,12 @@ class sitkTile:
         tform['Size'] = (str(mov.shape[2]),str(mov.shape[1]),str(mov.shape[0]))
         
         params = list(tform['TransformParameters'])
-        #set z
-        params[-1] = str(float(tform['TransformParameters'][-1])-(4*(ROI_min_fix[0]-ROI_min_mov[0])))
-        #set y
-        params[-2] = str(float(tform['TransformParameters'][-2])-(1.625*(ROI_min_fix[1]-ROI_min_mov[1])))
         #set x
-        params[-3] = str(float(tform['TransformParameters'][-3])-(1.625*(ROI_min_fix[2]-ROI_min_mov[2])))
+        params[-3] = str(float(tform['TransformParameters'][-3])-(resolution[0] * (ROI_min_fix[2]-ROI_min_mov[2])))
+        #set y
+        params[-2] = str(float(tform['TransformParameters'][-2])-(resolution[1]*(ROI_min_fix[1]-ROI_min_mov[1])))
+        #set z
+        params[-1] = str(float(tform['TransformParameters'][-1])-(resolution[2]*(ROI_min_fix[0]-ROI_min_mov[0])))
         
         tform['TransformParameters'] = tuple(params)
         
