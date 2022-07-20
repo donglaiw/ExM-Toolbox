@@ -1,4 +1,5 @@
 from yacs.config import CfgNode as CN
+import SimpleITK as sitk
 
 # -----------------------------------------------------------------------------
 # Config definition
@@ -18,7 +19,7 @@ _C.SYSTEM = CN()
 # -----------------------------------------------------------------------------
 _C.ALIGN = CN()
 
-# Alignment set up parameters
+# Elastix params
 _C.ALIGN.RESOLUTION = [1.625,1.625,4.0]
 _C.ALIGN.TRANSFORM_TYPE = ['rigid']
 _C.ALIGN.TYPE = 'intensity'
@@ -27,6 +28,20 @@ _C.ALIGN.NumberOfSamplesForExactGradient = '100000'
 _C.ALIGN.MaximumNumberOfIterations = '10000'
 _C.ALIGN.MaximumNumberOfSamplingAttempts = '100'
 _C.ALIGN.FinalBSplineInterpolationOrder = '1'
+
+#Evo optimizer
+## evo optim params
+_C.ALIGN.NumberOfIterations = 10000
+_C.ALIGN.InitialRadius = 6.25e-3 / 10
+_C.ALIGN.Epsilon = 1.5e-6
+## multi res params
+_C.ALIGN.ShrinkFactors = [4, 2, 1]
+_C.ALIGN.SmoothingSigmas = [2, 1, 0]
+## mutual info params
+_C.ALIGN.MetricSamplingPercentage = 0.01
+_C.ALIGN.MetricSamplingStrategy = sitk.ImageRegistrationMethod().RANDOM
+_C.ALIGN.NumberOfHistogramBins = 50
+_C.ALIGN.Interpolator = sitk.sitkLinear
 
 # -----------------------------------------------------------------------------
 # Dataset

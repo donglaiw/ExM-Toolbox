@@ -115,7 +115,7 @@ class sitkTile:
         # work with mask correctly
         # https://github.com/SuperElastix/SimpleElastix/issues/198
         # not enough samples in the mask
-        self.elastix.SetLogToConsole(False)
+        self.elastix.SetLogToConsole(True)
         self.elastix.LogToFileOn()
 
         if res_fix is None:
@@ -196,4 +196,77 @@ class sitkTile:
         global_result = self.warpVolume(mov, tform)
         
         return tform, global_result
+    
+    def computeTransformMapEvoOptim(self, fix, mov):
+        
+        '''
+        Align two images using the OnePlusOneEvolutionaryOptimizer
+        There are many parameters written to this method using the cfg dict that initilizes this object
+        Make sure they are the actual ones you would like to use
+        
+        USER CASE:
+        
+        # some numpy arrays converted to sitkImage objs
+        sitk_fix,sitk_mov = align.convertSitkImage(fix_img),align.convertSitkImage(mov_img)
+        # make sure to cast as float32 or float64 or else function won't work
+        sitk_fix,sitk_mov = sitk.Cast(sitk_fix, sitk.sitkFloat32),sitk.Cast(sitk_mov, sitk.sitkFloat32)
+        
+        tform = computeTransformMapEvoOptim(sitk_fix,sitk_mov)
+        
+        # now resample, not part of our function but necessary to get resulting img
+        moving_resampled = sitk.Resample(
+            sitk_fix,
+            sitk_mov,
+            final_transform,
+            # below could also be cfg.ALIGN.Interpolator
+            sitk.sitkLinear,
+            0.0,
+            sitk_mov.GetPixelID(),
+        )
+        result = sitk.GetArrayFromImage(moving_resampled)
+        '''
+        # init tform
+        initial_transform = sitk.CenteredTransformInitializer(
+            fix,
+            mov,
+            sitk.Euler3DTransform(),
+            sitk.CenteredTransformInitializerFilter.GEOMETRY,
+        )
+        
+        registration_method = sitk.ImageRegistrationMethod()
+        
+        # Similarity metric settings.
+        registration_method.SetMetricAsMattesMutualInformation(self.cfg.ALIGN.NumberOfHistogramBins)
+        registration_method.SetMetricSamplingStrategy(self.cfg.ALIGN.MetricSamplingStrategy)
+        registration_method.SetMetricSamplingPercentage(self.cfg.ALIGN.MetricSamplingPercentage)
+        
+        # Set interpolator
+        registration_method.SetInterpolator(self.cfg.ALIGN.Interpolator)
+        
+        # Optimizer settings.
+        registration_method.SetOptimizerAsOnePlusOneEvolutionary(
+            numberOfIterations = self.cfg.ALIGN.NumberOfIterations,
+            epsilon = self.cfg.ALIGN.Epsilon,
+            initialRadius = self.cfg.ALIGN.InitialRadius)
+        registration_method.SetOptimizerScalesFromPhysicalShift()
+        
+        # Setup for the multi-resolution framework.
+        registration_method.SetShrinkFactorsPerLevel(self.cfg.ALIGN.ShrinkFactors)
+        # smoothing sigmas 
+        registration_method.SetSmoothingSigmasPerLevel(self.cfg.ALIGN.SmoothingSigmas)
+        registration_method.SmoothingSigmasAreSpecifiedInPhysicalUnitsOn()
+        
+        # Don't optimize in-place, we would possibly like to run this multiple times.
+        # check this notebook to see if other method works better:
+        # http://insightsoftwareconsortium.github.io/SimpleITK-Notebooks/Python_html/63_Registration_Initialization.html
+        # see if inplace param is important:
+        # https://simpleitk.org/doxygen/latest/html/classitk_1_1simple_1_1ImageRegistrationMethod.html#a3492f3f1091a657c0c553bebad4bd3de
+        registration_method.SetInitialTransform(initial_transform, inPlace=False)
+        
+        final_transform = registration_method.Execute(
+            fix, mov
+        )
+        
+        return final_transform
+        
         
