@@ -33,7 +33,8 @@ _C.ALIGN.FinalBSplineInterpolationOrder = '1'
 ## evo optim params
 _C.ALIGN.NumberOfIterations = 10000
 _C.ALIGN.InitialRadius = 6.25e-3 / 10
-_C.ALIGN.Epsilon = 1.5e-6
+# note diff from matlab
+_C.ALIGN.Epsilon = 1.5e-4
 ## multi res params
 _C.ALIGN.ShrinkFactors = [4, 2, 1]
 _C.ALIGN.SmoothingSigmas = [2, 1, 0]

@@ -150,6 +150,16 @@ class sitkTile:
         return self.elastix.GetTransformParameterMap()[0]
         
     def warpVolume(self, vol_move, transform_map, res_move=None, log = 'console'):
+        
+        '''
+        Warps a given volume using transformix and a given transformaiton matrix
+        
+        USE CASE:
+        
+        
+        '''
+        
+        
         if log == 'console':
             self.transformix.SetLogToConsole(True)
         else:
@@ -165,6 +175,27 @@ class sitkTile:
         return out
     
     def localToGlobalTform(self, fix, mov, ROI_min_fix: list, ROI_max_fix: list, ROI_min_mov: list, ROI_max_mov, resolution: list = None):
+        
+        '''
+        Applies a Euler3D tform to a cropped portion of a fixed and moving image hypothesized to have a known solution, the translation 
+        parameters of that tform are then modified to correspond to the global image. Rotation parameters are not modified. 
+        
+        
+        USE CASE:
+        
+        #define some ROI in fixed img
+        ROI_min_fix = [50,700,100]
+        ROI_max_fix = [100,1150,550]
+        
+        #define corresponding ROI in moving img
+        ROI_min_mov = [89,700,100]
+        ROI_max_mov = [139,1150,550]
+        
+        # align
+        align_local = alignBuild(cfg)
+        align_local.buildSitkTile()
+        tform, result = align_local.localToGlobalTform(fix, mov, ROI_min_fix, ROI_max_fix, ROI_min_mov, ROI_max_mov)
+        '''
         
         if resolution is None:
             resolution = self.resolution
@@ -268,5 +299,22 @@ class sitkTile:
         )
         
         return final_transform
+    
+    def mutual_information(img1,img2, bins = 20):
+        """ Mutual information for joint histogram
+        """
+        # get histogram
+        hist_2d, _, _ = np.histogram2d(
+            img1.ravel(),
+            img2.ravel(),
+            bins=bins)
+        # Convert bins counts to probability values
+        pxy = hgram / float(np.sum(hgram))
+        px = np.sum(pxy, axis=1) # marginal for x over y
+        py = np.sum(pxy, axis=0) # marginal for y over x
+        px_py = px[:, None] * py[None, :] # Broadcast to multiply marginals
+        # Now we can do the calculation using the pxy, px_py 2D arrays
+        nzs = pxy > 0 # Only non-zero pxy values contribute to the sum
+        return np.sum(pxy[nzs] * np.log(pxy[nzs] / px_py[nzs]))
         
         
