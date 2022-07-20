@@ -8,95 +8,89 @@ import matplotlib.pyplot as plt
 
 outputs = []
 
-f_vol_fix = '/mp/nas3/Margaret_mouse_new/2022.03_5xFAD/preprocessed/WT-Hippo-ROI1_round001_pp.tif'
-f_vol_move = '/mp/nas3/Margaret_mouse_new/2022.03_5xFAD/preprocessed/WT-Hippo-ROI1_round007_pp.tif'
-f_vol_out = '/home/ckapoor/marg_new/WT-Hippo-ROI1_round001_warped.h5'
 
-fixed_img = tiffile.imread(f_vol_fix)
-moving_img = tiffile.imread(f_vol_move)
+def channel_tf(f_vol_fix: str, f_vol_mov: str, f_vol_out: str,
+               fixed_img: np.ndarray, moving_img: np.ndarray):
+    for i in range(2, 3):
 
-for i in range(2, 3):
-    #f_vol_move = '/mp/nas3/Margaret_mouse/round00' + str(i) + '.nd2'
-    #f_vol_out = './Stress_granule/Round' + str(i) + '_warped.h5'
+        m_transform_type = ['affine']
+        m_channel_name = 'GFAP+SMI+Lectin' # okay to be partial name
+        m_resolution = [1.625,1.625, 4] # um: xyz. the image volume is in zyx-order
 
-    m_transform_type = ['affine']
-    m_channel_name = 'GFAP+SMI+Lectin' # okay to be partial name
-    m_resolution = [1.625,1.625, 4] # um: xyz. the image volume is in zyx-order
+        # main function to run
+        elastixImageFilter = sitk.ElastixImageFilter()
+        #elastixImageFilter = sitk.SimpleElastix()
 
-    # main function to run
-    elastixImageFilter = sitk.ElastixImageFilter()
-    #elastixImageFilter = sitk.SimpleElastix()
+        # 1. set transformation parameters
+        if len(m_transform_type) == 1:
+            param_map = sitk.GetDefaultParameterMap(m_transform_type[0])
+            param_map['NumberOfSamplesForExactGradient'] = ['100000']
+            param_map['MaximumNumberOfIterations'] = ['10000']
+            param_map['MaximumNumberOfSamplingAttempts'] = ['50']
+            param_map['FinalBSplineInterpolationOrder'] = ['1']
+            elastixImageFilter.SetParameterMap(param_map)
+        else:
+            parameterMapVector = sitk.VectorOfParameterMap()
+            for trans in m_transform_type:
+                parameterMapVector.append(sitk.GetDefaultParameterMap(trans))
+            elastixImageFilter.SetParameterMap(parameterMapVector)
 
-    # 1. set transformation parameters
-    if len(m_transform_type) == 1:
-        param_map = sitk.GetDefaultParameterMap(m_transform_type[0])
-        param_map['NumberOfSamplesForExactGradient'] = ['100000']
-        param_map['MaximumNumberOfIterations'] = ['10000']
-        param_map['MaximumNumberOfSamplingAttempts'] = ['15']
-        param_map['FinalBSplineInterpolationOrder'] = ['1']
-        elastixImageFilter.SetParameterMap(param_map)
-    else:
-        parameterMapVector = sitk.VectorOfParameterMap()
-        for trans in m_transform_type:
-            parameterMapVector.append(sitk.GetDefaultParameterMap(trans))
-        elastixImageFilter.SetParameterMap(parameterMapVector)
+        # 2. load volume (for tif files)
+        img_np = fixed_img[:, 3]
+        print('vol-fix shape:', img_np.shape)
+        img = sitk.GetImageFromArray(img_np)
+        img.SetSpacing(m_resolution)
+        elastixImageFilter.SetFixedImage(img)
 
-    # 2. load volume (for tif files)
-    img_np = fixed_img[:, 3]
-    print('vol-fix shape:', img_np.shape)
-    img = sitk.GetImageFromArray(img_np)
-    img.SetSpacing(m_resolution)
-    elastixImageFilter.SetFixedImage(img)
+        img_np = moving_img[:, 3]
+        print('vol-move shape:', img_np.shape)
+        img = sitk.GetImageFromArray(img_np)
+        img.SetSpacing(m_resolution)
+        elastixImageFilter.SetMovingImage(img)
 
-    img_np = moving_img[:, 3]
-    print('vol-move shape:', img_np.shape)
-    img = sitk.GetImageFromArray(img_np)
-    img.SetSpacing(m_resolution)
-    elastixImageFilter.SetMovingImage(img)
+        # 3. compute transformation
+        elastixImageFilter.Execute()
 
-    # 3. compute transformation
-    elastixImageFilter.Execute()
+        # 4. save output
+        # save transformation param
+        param_map = elastixImageFilter.GetTransformParameterMap()[0]
+        sitk.WriteParameterFile(param_map, f_vol_out[:f_vol_out.rfind('.')] + '.txt')
 
-    # 4. save output
-    # save transformation param
-    param_map = elastixImageFilter.GetTransformParameterMap()[0]
-    sitk.WriteParameterFile(param_map, f_vol_out[:f_vol_out.rfind('.')] + '.txt')
+        # save warped channels
+        #channel_names = ND2Reader(f_vol_move).metadata['channels']
+        channel_names = ['GluA1', 'GluA2', 'Shank3', 'GFAP+SMI+Lectin']
 
-    # save warped channels
-    #channel_names = ND2Reader(f_vol_move).metadata['channels']
-    channel_names = ['GluA1', 'GluA2', 'Shank3', 'GFAP+SMI+Lectin']
+        if len(channel_names) == 1:
+            # directly save
+            sitk.WriteImage(sitk.Cast(elastixImageFilter.GetResultImage(), sitk.sitkUInt16), f_vol_out)
 
-    if len(channel_names) == 1:
-        # directly save
-        sitk.WriteImage(sitk.Cast(elastixImageFilter.GetResultImage(), sitk.sitkUInt16), f_vol_out)
+        else:
+            fid = h5py.File(f_vol_out, 'w')
+            ds = fid.create_dataset('spacing', [3], compression="gzip", dtype=int)
+            ds[:] = np.array(m_resolution).astype(int)
+            # image type: float -> np.uint16
+            img_out = sitk.GetArrayFromImage(elastixImageFilter.GetResultImage()).astype(np.uint16)
+            ds = fid.create_dataset([x for x in channel_names if m_channel_name in x][0], img_out.shape, compression="gzip", dtype=img_out.dtype)
+            ds[:] = img_out
 
-    else:
-        fid = h5py.File(f_vol_out, 'w')
-        ds = fid.create_dataset('spacing', [3], compression="gzip", dtype=int)
-        ds[:] = np.array(m_resolution).astype(int)
-        # image type: float -> np.uint16
-        img_out = sitk.GetArrayFromImage(elastixImageFilter.GetResultImage()).astype(np.uint16)
-        ds = fid.create_dataset([x for x in channel_names if m_channel_name in x][0], img_out.shape, compression="gzip", dtype=img_out.dtype)
-        ds[:] = img_out
+            # warp other channels
+            transformixImageFilter = sitk.TransformixImageFilter()
+            transformixImageFilter.SetTransformParameterMap(param_map)
+            for channel_name in channel_names:
+                if m_channel_name not in channel_name:
+                    img_np = nd2ToVol(f_vol_move, channel_name)
+                    print('vol 2:', channel_name, img_np.shape)
+                    img = sitk.GetImageFromArray(img_np)
+                    img.SetSpacing(m_resolution)
+                    transformixImageFilter.SetMovingImage(img)
+                    transformixImageFilter.Execute()
+                    img_out = sitk.GetArrayFromImage(transformixImageFilter.GetResultImage()).astype(np.uint16)
+                    ds = fid.create_dataset(channel_name, img_out.shape, compression="gzip", dtype=img_out.dtype)
+                    ds[:] = img_out
+            fid.close()
 
-        # warp other channels
-        transformixImageFilter = sitk.TransformixImageFilter()
-        transformixImageFilter.SetTransformParameterMap(param_map)
-        for channel_name in channel_names:
-            if m_channel_name not in channel_name:
-                img_np = nd2ToVol(f_vol_move, channel_name)
-                print('vol 2:', channel_name, img_np.shape)
-                img = sitk.GetImageFromArray(img_np)
-                img.SetSpacing(m_resolution)
-                transformixImageFilter.SetMovingImage(img)
-                transformixImageFilter.Execute()
-                img_out = sitk.GetArrayFromImage(transformixImageFilter.GetResultImage()).astype(np.uint16)
-                ds = fid.create_dataset(channel_name, img_out.shape, compression="gzip", dtype=img_out.dtype)
-                ds[:] = img_out
-        fid.close()
-
-    outputs.append(f_vol_out)
-    outputs.append(f_vol_out)
+        outputs.append(f_vol_out)
+        outputs.append(f_vol_out)
 
 
 class sitkTile:
@@ -198,31 +192,4 @@ class sitkTile:
         self.transformix.Execute()
         out = sitk.GetArrayFromImage(self.transformix.GetResultImage())
         return out
-
-
-def warpAllChannels(output_path, vol_mov_path, channel_names, sitkTile = sitkTile()):
-    # set channel names
-    #channel_names = ['GluA1', 'GluA2', 'Shank3', 'GFAP+SMI+Lectin']
-
-    # set sitk
-    res = [1.625, 1.625, 4]
-    sitkTile.setResolution(res)
-    sitkTile.setTransformType(transform_type=['rigid'])
-
-    for ind, channel in tqdm.tqdm(enumerate(channel_names)):
-        tform = sitkTile.readTransformMap(tform_path)
-        vol_mov = tiffile.imread(vol_mov_path)[: ,ind]
-
-        # perform transform
-        result = sitkTile.warpVolume(vol_mov, tform)
-
-        # write transform
-        with h5py.File(output_path, 'r+') as f:
-            if channel in f.keys():
-                del f[channel]
-                f.create_dataset(channel, result.shape, compression='gzip',
-                                 dtype=result.dtype, data=result)
-            else:
-                f.create_dataset(channel, result.shape, compression='gzip',
-                                 dtype=result.dtype, data=result)
 
