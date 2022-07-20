@@ -54,3 +54,41 @@ def createROI(im_fpath: str, ROI: list):
 
     return np.array(im_ROI)
 
+
+def genFileName(fov: str, n_round: int, n_channel:int):
+    '''
+    generate file name in the format:
+    [ROIname]_[round00n]_[ch0n]_warped.tif
+    '''
+    assert n_round > 0, "enter valid round"
+
+    if n_round > 9:
+        return f"{fov}_round0{n_round}_ch0{n_channel}_warped.tif"
+    else:
+        return f"{fov}_round00{n_round}_ch0{n_channel}_warped.tif"
+
+
+def getTformPath(f_path: str):
+    '''
+    return a list of SITK transformation text file locations
+    from a given parent directory
+    '''
+
+    # sanity check on path
+    if not os.path.exists(f_path):
+        print('non-existent directory location')
+        return
+
+    tform_paths = list()
+    tform_files = list()
+
+    for sub_dir in os.listdir(f_path):
+        for rounds in os.listdir(os.path.join(f_path, sub_dir)):
+            sub_dir_path = os.path.join(f_path, sub_dir+'/'+rounds)
+            for file in os.listdir(sub_dir_path):
+                if file.endswith('.txt'):
+                    tform_paths.append(os.path.join(sub_dir_path, file))
+                    tform_files.append(file)
+
+    return sorted(tform_files), sorted(tform_paths)
+
