@@ -2,6 +2,7 @@ import SimpleITK as sitk
 import numpy as np
 from yacs.config import CfgNode
 import cv2 as cv
+import os
 
 
 class sitkTile:
@@ -120,9 +121,16 @@ class sitkTile:
             self.elastix.SetLogToConsole(True)
         elif log == 'file':
             self.elastix.SetLogToFile(True)
-            self.elastix.SetOutputDirectory(log_path)
+            if os.path.isdir(log_path):
+                self.elastix.SetOutputDirectory(log_path)
+            else:
+                os.mkdir(log_path)
+                self.elastix.SetOutputDirectory(log_path)
+        elif log is None:
+            self.elastix.SetLogToFile(False)
+            self.elastix.SetLogToConsole(False)
         else:
-            raise KeyError(f'log must be either console or string not {log}')
+            raise KeyError(f'log must be console, file, or None not {log}')
 
         if res_fix is None:
             res_fix = self.resolution
