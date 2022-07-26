@@ -176,3 +176,20 @@ def downsample(arr, block_size):
     new_array = skimage.measure.block_reduce(arr, block, np.mean)
 
     return new_array
+
+def parse_sitklog(log_path: str):
+    
+    result_metric = []
+    result_stepsize = []
+    start_ind = 10000000
+    with open(log_path, 'r') as f:
+        lines = f.readlines()
+        for ind, x in enumerate(lines):
+            if x == '1:ItNr\t2:Metric\t3a:Time\t3b:StepSize\t4:||Gradient||\tTime[ms]\n':
+                start_ind = ind
+            if ind > start_ind and '\t-' in x:
+                splt = x.split('\t')
+                result_metric.append(splt[1])
+                result_stepsize.append(splt[3])
+                
+    return result_metric, result_stepsize
