@@ -111,12 +111,18 @@ class sitkTile:
     
         return mask
     
-    def computeTransformMap(self, fix_dset, move_dset, res_fix=None, res_move=None, mask_fix=None, mask_move=None):
+    def computeTransformMap(self, fix_dset, move_dset, res_fix=None, res_move=None, mask_fix=None, mask_move=None, log = 'file', log_path = 
+                            './sitk_log/'):
         # work with mask correctly
         # https://github.com/SuperElastix/SimpleElastix/issues/198
         # not enough samples in the mask
-        self.elastix.SetLogToConsole(True)
-        self.elastix.LogToFileOn()
+        if log == 'console':
+            self.elastix.SetLogToConsole(True)
+        elif log == 'file':
+            self.elastix.SetLogToFile(True)
+            self.elastix.SetOutputDirectory(log_path)
+        else:
+            raise KeyError(f'log must be either console or string not {log}')
 
         if res_fix is None:
             res_fix = self.resolution
@@ -304,10 +310,7 @@ class sitkTile:
         """ Mutual information for joint histogram
         """
         # get histogram
-        hist_2d, _, _ = np.histogram2d(
-            img1.ravel(),
-            img2.ravel(),
-            bins=bins)
+        hgram, _, _ = np.histogram2d(np.ravel(img1),np.ravel(img2),bins=bins)
         # Convert bins counts to probability values
         pxy = hgram / float(np.sum(hgram))
         px = np.sum(pxy, axis=1) # marginal for x over y
