@@ -144,7 +144,49 @@ class PointCloud:
         transformed[:, 2] += x_diff
         # mean differences along axes
         print(f"Mean differences: Z-mean = {np.mean(abs(transformed[:, 0]-fix[:, 0]))}\n
-        Y-mean = {np.mean(abs(transformed[:, 1]-fix[:, 1]))}\n
-        X-mean = {np.mean(abs(transformed[:, 2]-fix[:, 2]))}")
-        return rbf_x(cspace), rbf_y(cspace), rbf_z(cspace)
+                                  Y-mean = {np.mean(abs(transformed[:, 1]-fix[:, 1]))}\n
+                                  X-mean = {np.mean(abs(transformed[:, 2]-fix[:, 2]))}")
+
+        if (np.mean(abs(transformed[:,0]-target[:,0])) < 15  and np.mean(abs(transformed[:,1]-target[:,1])) < 15 and
+            np.mean(abs(transformed[:,2]-target[:,2])) < 15):
+            return transformed, rbf_x(cspace), rbf_y(cspace), rbf_z(cspace)
+        else:
+            print('high mean, redoing interpolation')
+            RBF(fix=fix, move=move, cspace=cspace)
+
+    def warp(f_path: str, f_fix: str, f_move: str):
+        '''
+        warp an image volume using an initial and final coordinate space representation
+
+        args:   f_path -> path to image volume
+                f_fix  -> path to fixed points
+                f_move -> path to moving points
+
+        returns an image (16-bit) warped with a new coordinate space
+        '''
+        img = imread(f_path)
+        # generate coordinate mesh
+        zz, yy, xx = np.meshgrid(np.arange(img.shape[0]), np.arange(img.shape[1]), np.arange[2],
+                                 indexing='ij')
+        # read points
+        fix = np.loadtxt(f_fix, delimiter=' ')
+        move = np.loadtxt(f_move, delimiter=' ')
+        self.fix = fix
+        self.move = move
+        # generate coordinate indices
+        print(f"Generating coordinate indices (this might take a while)...")
+        cspace = np.stack([x for x in np.ndindex(img.shape[0], img.shape[1], img.shape[2])])
+        print(f"Completed coordinate generation\n\n")
+        # compute interpolation vectors
+        print(f"Computing interpolation vectors (this might take a while)...")
+        _, dx, dy, dz = RBF(move, fix, cspace, percentage=0.05)
+        print(f"Computed interpolation vectors\n\n")
+        # reshape interpolation vector
+        dx = dx.reshape(img.shape[0], img.shape[1], img.shape[2])
+        dy = dy.reshape(img.shape[0], img.shape[1], img.shape[2])
+        dz = dz.reshape(img.shape[0], img.shape[1], img.shape[2])
+        # warp image (16-bit)
+        print(f"Warping image...")
+        img_warp = warp(img, np.array([zz+dz, yy+dy, xx+dx]), order=3, preserve_range=True).astype('uint16')
+        return img_warp
 
