@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import SimpleITK as sitk
 from tiffile import imread, imwrite
 from skimage.measure import label, regionprops
+from skimage.transform import warp
+from scipy.interpolate import RBFInterpolator
 from scipy.spatial.distance import cdist
 
 
@@ -13,7 +15,7 @@ class PointCloud:
     compute and register point clouds
     use interpolation to warp image volume
     '''
-    def __init__(self):
+    def __init__(self, fix, move):
         self.fix = fix
         self.move = move
 
@@ -104,4 +106,45 @@ class PointCloud:
             pair['valid'] = True
         print(f"Pairs: {len(pairs)}")
         return pairs
+
+    def RBF(self, fix: np.ndarray, move: np.ndarray, cspace: np.ndarray, percentage=0.05):
+        '''
+        compute the interpolation vectors using a thin plate spline
+        kernel between the fixed and moving point clouds
+
+        args:   fix        -> fixed point cloud
+                move       -> moving point cloud
+                cspace     -> original coordinate space of the image
+                percentage -> fraction of corresponding points to be used for
+                              registration (default = 0.05)
+
+        returns interpolation matrices along the X, Y and Z axes for the
+        original coordinate space
+        '''
+        self.fix = fix
+        self.move = move
+        index_small = np.random.choice(range(len(fix)), int(percentage*len(fix)), replace=False)
+        fix_small  = fix[index_small,:]
+        move_small = move[index_small,:]
+        # differences along X, Y, Z axes (order is [z, y, x])
+        dz_small = np.asarray(fix_small-move_small)[:, 0]
+        dy_small = np.asarray(fix_small-move_small)[:, 1]
+        dx_small = np.asarray(fix_small-move_small)[:, 2]
+        # interpolation along all axes
+        rbf_z = RBFInterpolator(move_small, dz_small, kernel='thin_plate_spline', degree=3)
+        rbf_y = RBFInterpolator(move_small, dy_small, kernel='thin_plate_spline', degree=3)
+        rbf_x = RBFInterpolator(move_small, dx_small, kernel='thin_plate_spline', degree=3)
+        # interpolation vectors
+        z_diff = rbf_z(move)
+        y_diff = rbf_y(move)
+        x_diff = rbf_x(move)
+        transformed = move
+        transformed[:, 0] += z_diff
+        transformed[:, 1] += y_diff
+        transformed[:, 2] += x_diff
+        # mean differences along axes
+        print(f"Mean differences: Z-mean = {np.mean(abs(transformed[:, 0]-fix[:, 0]))}\n
+        Y-mean = {np.mean(abs(transformed[:, 1]-fix[:, 1]))}\n
+        X-mean = {np.mean(abs(transformed[:, 2]-fix[:, 2]))}")
+        return rbf_x(cspace), rbf_y(cspace), rbf_z(cspace)
 
