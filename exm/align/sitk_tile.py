@@ -3,7 +3,8 @@ import numpy as np
 from yacs.config import CfgNode
 import cv2 as cv
 import os
-
+from scipy.ndimage import gaussian_filter
+from skimage.morphology import convex_hull_image
 
 class sitkTile:
     # 1. estimate transformation between input volumes
@@ -92,7 +93,7 @@ class sitkTile:
 
         return vol
     
-    def compute_mask_cv(img, sigma = 2, thrsh = 200, kernel_size = 100):
+    def compute_mask_cv(self, img, sigma = 2, thrsh = 200, kernel_size = 100):
     
         mask = np.zeros(img.shape)
 
@@ -119,7 +120,9 @@ class sitkTile:
         # not enough samples in the mask
         if log == 'console':
             self.elastix.SetLogToConsole(True)
+            self.elastix.SetLogToFile(False)
         elif log == 'file':
+            self.elastix.SetLogToConsole(False)
             self.elastix.SetLogToFile(True)
             if os.path.isdir(log_path):
                 self.elastix.SetOutputDirectory(log_path)
@@ -188,7 +191,12 @@ class sitkTile:
         out = sitk.GetArrayFromImage(self.transformix.GetResultImage())
         return out
     
-    def localToGlobalTform(self, fix, mov, ROI_min_fix: list, ROI_max_fix: list, ROI_min_mov: list, ROI_max_mov, resolution: list = None):
+    def localToGlobalTform(self, 
+                           fix, mov,
+                           ROI_min_fix: list, ROI_max_fix: list,
+                           ROI_min_mov: list, ROI_max_mov,
+                           mask_fix=None, mask_move=None,
+                           resolution: list = None):
         
         '''
         Applies a Euler3D tform to a cropped portion of a fixed and moving image hypothesized to have a known solution, the translation 
@@ -219,7 +227,7 @@ class sitkTile:
         f_crop = fix[ROI_min_fix[0]:ROI_max_fix[0],ROI_min_fix[1]:ROI_max_fix[1],ROI_min_fix[2]:ROI_max_fix[2]]
         m_crop = mov[ROI_min_mov[0]:ROI_max_mov[0],ROI_min_mov[1]:ROI_max_mov[1],ROI_min_mov[2]:ROI_max_mov[2]]
 
-        tform = self.computeTransformMap(f_crop,m_crop)
+        tform = self.computeTransformMap(f_crop,m_crop, mask_fix = mask_fix, mask_move =  mask_move)
         
         x_glob = str((ROI_max_mov[2] + ROI_min_mov[2]) / 2 * resolution[0])
         y_glob = str((ROI_max_mov[1] + ROI_min_mov[1]) / 2 * resolution[1])
