@@ -143,7 +143,7 @@ class sitkTile:
     
     def computeSift(self,fix, mov):
         
-        sifit = cv.SIFT_create()
+        sift = cv.SIFT_create()
         
         norms = []
         
