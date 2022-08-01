@@ -141,7 +141,8 @@ class sitkTile:
         norm = np.linalg.norm(min_dist)
         return norm
     
-    def computeCorrespondingZ(self,fix, mov, k = 2, flann_idx_kdtree = 0, flann_trees = 5, checks = 50, mask = None):
+    def computeCorrespondingZ(self,fix, mov, k = 2, flann_idx_kdtree = 0, flann_trees = 5, checks = 50,
+                              sift_mask = None, flann_mask = False, ratio = .75):
         
         sift = cv.SIFT_create()
         
@@ -154,19 +155,31 @@ class sitkTile:
             
         flann = cv.FlannBasedMatcher(index_params,search_params)
         
-        kpf, desf = sift.detectAndCompute(fix.astype('uint8'), mask)
-        kpm, desm = sift.detectAndCompute(mov.astype('uint8'), mask)
+        kpf, desf = sift.detectAndCompute(fix.astype('uint8'), sift_mask)
+        kpm, desm = sift.detectAndCompute(mov.astype('uint8'), sift_mask)
         matches = flann.knnMatch(desf,desm,k=k)
         
         
-        if masks is not None:
-            dists = [[pt[0].distance, pt[1].distance] for ind, pt in enumerate(matches) if mask[ind] == [1,0]]
+        if flann_mask is True:
+            # Need to draw only good matches, so create a mask
+            matchesMask = [[0,0] for i in range(len(matches))]
+            # ratio test as per Lowe's paper
+            for i,(m,n) in enumerate(matches):
+                if m.distance < ratio*n.distance:
+                    matchesMask[i]=[1,0]
+            dists = [[pt[0].distance, pt[1].distance] for ind, pt in enumerate(matches) if matchesMask[ind] == [1,0]]
             dists = np.asarray(dists)
-            norm = np.linalg.norm(dists[:,0])
+            if dists.size > 0:
+                norm = np.linalg.norm(dists[:,0])
+            else:
+                return None
         else:
-            dists = [[pt[0].distance, pt[1].distance] for pt in matches]
-            dists = np.asarray(dists)
-            norm = np.linalg.norm(dists[:,0])
+                dists = [[pt[0].distance, pt[1].distance] for pt in matches]
+                dists = np.asarray(dists)
+                if dists.size > 0:
+                    norm = np.linalg.norm(dists[:,0])
+                else:
+                    return None
         
         return norm
         
