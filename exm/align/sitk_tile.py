@@ -131,8 +131,8 @@ class sitkTile:
     
     def computeMinNorm(self,point_cloud1, point_cloud2):
         
-        temp1 = np.copy(pc1)
-        temp2 = np.copy(pc2)
+        temp1 = np.copy(point_cloud1)
+        temp2 = np.copy(point_cloud2)
         # get distance btw point clouds
         distance = cdist(temp1, temp2, 'euclidean')
         # get point in pc2 w/ min distance to a given point in pc1
@@ -141,34 +141,36 @@ class sitkTile:
         norm = np.linalg.norm(min_dist)
         return norm
     
-    def computeSift(self,fix, mov):
+    def computeCorrespondingZ(self,fix, mov, k = 2, flann_idx_kdtree = 0, flann_trees = 5, checks = 50, mask = None):
         
         sift = cv.SIFT_create()
         
-        norms = []
+        # FLANN parameters
+        index_params = dict(algorithm = flann_idx_kdtree, trees = flann_trees)
+        if checks is not None:
+            search_params = dict(checks=checks)   # or pass empty dictionary
+        else:
+            search_params = {}
+            
+        flann = cv.FlannBasedMatcher(index_params,search_params)
         
-        #get sift for fix
-        kpf, _ = sift.detectAndCompute(fix.astype('uint8'), None)
-        # create fix point cloud
-        pc1 = np.zeros((len(kpf),2))
-            for row, kp in enumerate(kpf):
-                pc1[row,:] = kp.pt
+        kpf, desf = sift.detectAndCompute(fix.astype('uint8'), mask)
+        kpm, desm = sift.detectAndCompute(mov.astype('uint8'), mask)
+        matches = flann.knnMatch(desf,desm,k=k)
         
-        for z in mov[:,:,:]:
-            # get sift for mov iter
-            kpm, _ = sift.detectAndCompute(z.astype('uint8'), None)
-            # create mov point cloud
-            pc2 = np.zeros((len(kpm),2))
-            for row, kp in enumerate(kpm):
-                pc2[row,:] = kp.pt
-            # get min dist bw a given point in pc2 and all points in pc1, norm this vector
-            norm = self.computeMinNorm(pc1,pc2)
-            #append
-            norms.append(norm)
-        #get ind w/ min norm
-        z_ind = np.argmin(norms)
         
-        return z_ind
+        if masks is not None:
+            dists = [[pt[0].distance, pt[1].distance] for ind, pt in enumerate(matches) if mask[ind] == [1,0]]
+            dists = np.asarray(dists)
+            norm = np.linalg.norm(dists[:,0])
+        else:
+            dists = [[pt[0].distance, pt[1].distance] for pt in matches]
+            dists = np.asarray(dists)
+            norm = np.linalg.norm(dists[:,0])
+        
+        return norm
+        
+        
     
     def computeTransformMap(self, fix_dset, move_dset, res_fix=None, res_move=None, mask_fix=None, mask_move=None, log = 'file', log_path = 
                             './sitk_log/'):
