@@ -5,6 +5,7 @@ import cv2 as cv
 import os
 from scipy.ndimage import gaussian_filter
 from skimage.morphology import convex_hull_image
+from scipy.spatial.distance import cdist
 
 class sitkTile:
     # 1. estimate transformation between input volumes
@@ -93,15 +94,30 @@ class sitkTile:
 
         return vol
     
-    def compute_mask_cv(self, img, sigma = 2, thrsh = 200, kernel_size = 100):
+    def computeMask(self, img, sigma = 2, thrsh = 200, kernel_size = 100):
     
         mask = np.zeros(img.shape)
 
         kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,(kernel_size,kernel_size))
+        
+        if len(img.shape) > 2:
 
-        for ind, z in enumerate(img):
+            for ind, z in enumerate(img):
+                # compute gaussian blur
+                gaus = gaussian_filter(z, sigma = sigma)
+                # binarize img
+                binary = np.asarray(gaus > thrsh)
+                #get convex hull
+                hull = convex_hull_image(binary)
+                #dilate
+                dilation = cv.dilate(hull.astype('uint8'), kernel, iterations = 1)
+    
+                mask[ind, :, :] = dilation
+        
+        elif len(img.shape) == 2:
+            
             # compute gaussian blur
-            gaus = gaussian_filter(z, sigma = sigma)
+            gaus = gaussian_filter(img, sigma = sigma)
             # binarize img
             binary = np.asarray(gaus > thrsh)
             #get convex hull
@@ -109,9 +125,50 @@ class sitkTile:
             #dilate
             dilation = cv.dilate(hull.astype('uint8'), kernel, iterations = 3)
 
-            mask[ind, :, :] = dilation
+            mask[:, :] = dilation
     
         return mask
+    
+    def computeMinNorm(self,point_cloud1, point_cloud2):
+        
+        temp1 = np.copy(pc1)
+        temp2 = np.copy(pc2)
+        # get distance btw point clouds
+        distance = cdist(temp1, temp2, 'euclidean')
+        # get point in pc2 w/ min distance to a given point in pc1
+        min_dist = np.min(distance, axis = 0)
+        # norm this vector
+        norm = np.linalg.norm(min_dist)
+        return norm
+    
+    def computeSift(self,fix, mov):
+        
+        sifit = cv.SIFT_create()
+        
+        norms = []
+        
+        #get sift for fix
+        kpf, _ = sift.detectAndCompute(fix.astype('uint8'), None)
+        # create fix point cloud
+        pc1 = np.zeros((len(kpf),2))
+            for row, kp in enumerate(kpf):
+                pc1[row,:] = kp.pt
+        
+        for z in mov[:,:,:]:
+            # get sift for mov iter
+            kpm, _ = sift.detectAndCompute(z.astype('uint8'), None)
+            # create mov point cloud
+            pc2 = np.zeros((len(kpm),2))
+            for row, kp in enumerate(kpm):
+                pc2[row,:] = kp.pt
+            # get min dist bw a given point in pc2 and all points in pc1, norm this vector
+            norm = self.computeMinNorm(pc1,pc2)
+            #append
+            norms.append(norm)
+        #get ind w/ min norm
+        z_ind = np.argmin(norms)
+        
+        return z_ind
     
     def computeTransformMap(self, fix_dset, move_dset, res_fix=None, res_move=None, mask_fix=None, mask_move=None, log = 'file', log_path = 
                             './sitk_log/'):
