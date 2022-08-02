@@ -26,7 +26,7 @@ class sitkTile:
         else: 
             self.resolution = self.cfg.ALIGN.RESOLUTION
 
-    #### Setup
+    #### Setup/IO
     def setTransformType(self, transform_type = None, num_iteration = None):
 
         if transform_type is not None:
@@ -56,33 +56,6 @@ class sitkTile:
     def writeTransformMap(self, filename, transform_map):
         return sitk.WriteParameterFile(transform_map, filename)
     
-    def createParameterMap(self, transform_type = None, num_iteration = None):
-
-        if transform_type is not None:
-            self.transform_type = transform_type
-
-        if num_iteration is not None:
-            self.num_iteration = num_iteration
-
-        if len(self.transform_type) == 1:
-            parameter_map = sitk.GetDefaultParameterMap(self.transform_type[0])
-            parameter_map['NumberOfSamplesForExactGradient'] = ['100000']
-            if num_iteration > 0:
-                parameter_map['MaximumNumberOfIterations'] = [str(self.num_iteration)]
-            else:
-                parameter_map['MaximumNumberOfIterations'] = ['10000']
-            parameter_map['MaximumNumberOfSamplingAttempts'] = ['100']
-            parameter_map['FinalBSplineInterpolationOrder'] = ['1']
-            #parameter_map['NumberOfResolutions'] = ['1']
-
-        else:
-            parameter_map = sitk.VectorOfParameterMap()
-            for trans in self.transform_type:
-                parameter_map.append(self.createParameterMap(trans, self.num_iteration))
-
-        return parameter_map
-
-    #### Estimate and warp with transformation
     def convertSitkImage(self, vol_np, res_np = None):
 
         vol = sitk.GetImageFromArray(vol_np)
@@ -93,6 +66,22 @@ class sitkTile:
             vol.SetSpacing(self.resolution)
 
         return vol
+    
+    ### Debug compute 
+    
+    def mutual_information(self,img1,img2, bins = 20):
+        """ Mutual information for joint histogram
+        """
+        # get histogram
+        hgram, _, _ = np.histogram2d(img1.ravel(),img2.ravel(),bins=bins)
+        # Convert bins counts to probability values
+        pxy = hgram / float(np.sum(hgram))
+        px = np.sum(pxy, axis=1) # marginal for x over y
+        py = np.sum(pxy, axis=0) # marginal for y over x
+        px_py = px[:, None] * py[None, :] # Broadcast to multiply marginals
+        # Now we can do the calculation using the pxy, px_py 2D arrays
+        nzs = pxy > 0 # Only non-zero pxy values contribute to the sum
+        return np.sum(pxy[nzs] * np.log(pxy[nzs] / px_py[nzs]))
     
     def computeMask(self, img, sigma = 2, thrsh = 200, kernel_size = 100):
     
@@ -141,7 +130,7 @@ class sitkTile:
         norm = np.linalg.norm(min_dist)
         return norm
     
-    def computeCorrespondingZ(self,fix, mov, k = 2, flann_idx_kdtree = 0, flann_trees = 5, checks = 50,
+    def computeCorrespondingZ(self,fix, mov, k = 1, flann_idx_kdtree = 0, flann_trees = 5, checks = 50,
                               sift_mask = None, flann_mask = False, ratio = .75):
         
         sift = cv.SIFT_create()
@@ -167,26 +156,61 @@ class sitkTile:
             for i,(m,n) in enumerate(matches):
                 if m.distance < ratio*n.distance:
                     matchesMask[i]=[1,0]
-            dists = [[pt[0].distance, pt[1].distance] for ind, pt in enumerate(matches) if matchesMask[ind] == [1,0]]
+                else:
+                    pass
+
+            dists = [pt[0].distance for ind, pt in enumerate(matches) if matchesMask[ind] == [1,0]]
             dists = np.asarray(dists)
+            
             if dists.size > 0:
-                norm = np.linalg.norm(dists[:,0])
+                norm = np.linalg.norm(dists)
+                min_dist = np.min(dists)
             else:
                 return None
+            
         else:
-                dists = [[pt[0].distance, pt[1].distance] for pt in matches]
-                dists = np.asarray(dists)
-                if dists.size > 0:
-                    norm = np.linalg.norm(dists[:,0])
-                else:
-                    return None
+            dists = [pt[0].distance for pt in matches]
+            dists = np.asarray(dists)
+            if dists.size > 0:
+                norm = np.linalg.norm(dists)
+                min_dist = np.min(dists) 
+            else:
+                return None
         
-        return norm
+        return norm, min_dist
+                     
+    def computeMaxMI(self, fix, mov, min_array, z_min = 0, num_minima = 5):
+                     
+        min_sorted = np.sort(min_array)
         
+        mi_result = {}
         
+        for row, min_val in enumerate(min_sorted[:num_minima]):
+        
+            z_ind = np.argwhere(min_array == min_val)[0][0]+z_min
+            mov_slice = mov[z_ind,:,:]
     
-    def computeTransformMap(self, fix_dset, move_dset, res_fix=None, res_move=None, mask_fix=None, mask_move=None, log = 'file', log_path = 
-                            './sitk_log/'):
+            hist_2d, _, _ = np.histogram2d(
+                mov_slice.ravel(),
+                fix_slice.ravel(),
+                bins=20)
+    
+            mi = mutual_information(hist_2d)
+            mi_result[z_ind] = mi
+        
+        max_mi = max(mi_result, key=mi_result.get)
+        max_mi_ind = max(mi_result)
+        
+        return max_mi, max_mi_ind
+        
+        
+        
+    #### Estimate and warp with transformation    
+    
+    def computeTransformMap(self, fix_dset, move_dset, 
+                            res_fix=None, res_move=None, 
+                            mask_fix=None, mask_move=None, 
+                            log = 'file', log_path = './sitk_log/'):
         # work with mask correctly
         # https://github.com/SuperElastix/SimpleElastix/issues/198
         # not enough samples in the mask
@@ -393,19 +417,5 @@ class sitkTile:
         )
         
         return final_transform
-    
-    def mutual_information(img1,img2, bins = 20):
-        """ Mutual information for joint histogram
-        """
-        # get histogram
-        hgram, _, _ = np.histogram2d(np.ravel(img1),np.ravel(img2),bins=bins)
-        # Convert bins counts to probability values
-        pxy = hgram / float(np.sum(hgram))
-        px = np.sum(pxy, axis=1) # marginal for x over y
-        py = np.sum(pxy, axis=0) # marginal for y over x
-        px_py = px[:, None] * py[None, :] # Broadcast to multiply marginals
-        # Now we can do the calculation using the pxy, px_py 2D arrays
-        nzs = pxy > 0 # Only non-zero pxy values contribute to the sum
-        return np.sum(pxy[nzs] * np.log(pxy[nzs] / px_py[nzs]))
         
         
