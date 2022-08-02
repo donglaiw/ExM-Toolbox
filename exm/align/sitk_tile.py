@@ -190,12 +190,7 @@ class sitkTile:
             z_ind = np.argwhere(min_array == min_val)[0][0]+z_min
             mov_slice = mov[z_ind,:,:]
     
-            hist_2d, _, _ = np.histogram2d(
-                mov_slice.ravel(),
-                fix.ravel(),
-                bins=20)
-    
-            mi = self.mutual_information(hist_2d)
+            mi = self.mutual_information(fix,mov_slice)
             mi_result[z_ind] = mi
         
         max_mi_ind = max(mi_result, key=mi_result.get)
