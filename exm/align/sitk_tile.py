@@ -195,7 +195,7 @@ class sitkTile:
                 fix.ravel(),
                 bins=20)
     
-            mi = mutual_information(hist_2d)
+            mi = self.mutual_information(hist_2d)
             mi_result[z_ind] = mi
         
         max_mi_ind = max(mi_result, key=mi_result.get)
