@@ -262,7 +262,7 @@ class sitkTile:
         # 4. output transformation parameter
         return self.elastix.GetTransformParameterMap()[0]
         
-    def warpVolume(self, vol_move, transform_map, res_move=None, log = 'console'):
+    def warpVolume(self, vol_move, transform_map, res_move=None, log = 'file', log_path = './transformix_log'):
         
         '''
         Warps a given volume using transformix and a given transformaiton matrix
@@ -275,11 +275,21 @@ class sitkTile:
         
         if log == 'console':
             self.transformix.SetLogToConsole(True)
+            self.transformix.SetLogToFile(False)
+        elif log == 'file':
+            self.transformix.SetLogToConsole(False)
+            self.transformix.SetLogToFile(True)
+            if os.path.isdir(log_path):
+                self.transformix.SetOutputDirectory(log_path)
+            else:
+                os.mkdir(log_path)
+                self.transformix.SetOutputDirectory(log_path)
+        elif log is None:
+            self.transformix.SetLogToFile(False)
+            self.transformix.SetLogToConsole(False)
         else:
-            self.transformix.LogToFileOn()
-
-        if res_move is None:
-            res_move = self.resolution
+            raise KeyError(f'log must be console, file, or None not {log}')
+            
             
         self.transformix.SetTransformParameterMap(transform_map)
         self.transformix.SetMovingImage(self.convertSitkImage(vol_move, res_move))
