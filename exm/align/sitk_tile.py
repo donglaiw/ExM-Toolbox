@@ -130,7 +130,7 @@ class sitkTile:
         norm = np.linalg.norm(min_dist)
         return norm
     
-    def computeCorrespondingZ(self,fix, mov, k = 1, flann_idx_kdtree = 0, flann_trees = 5, checks = 50,
+    def computeMinFlann(self,fix, mov, k = 1, flann_idx_kdtree = 0, flann_trees = 5, checks = 50,
                               sift_mask = None, flann_mask = False, ratio = .75):
         
         sift = cv.SIFT_create()
@@ -192,14 +192,14 @@ class sitkTile:
     
             hist_2d, _, _ = np.histogram2d(
                 mov_slice.ravel(),
-                fix_slice.ravel(),
+                fix.ravel(),
                 bins=20)
     
             mi = mutual_information(hist_2d)
             mi_result[z_ind] = mi
         
-        max_mi = max(mi_result, key=mi_result.get)
-        max_mi_ind = max(mi_result)
+        max_mi_ind = max(mi_result, key=mi_result.get)
+        max_mi = max(mi_result.values())
         
         return max_mi, max_mi_ind
         
