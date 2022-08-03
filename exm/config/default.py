@@ -25,7 +25,7 @@ _C.ALIGN.TRANSFORM_TYPE = ['rigid']
 _C.ALIGN.TYPE = 'intensity'
 #_C.ALIGN.NUM_ITERATION = -1
 _C.ALIGN.NumberOfSamplesForExactGradient = '100000'
-_C.ALIGN.MaximumNumberOfIterations = '10000'
+_C.ALIGN.MaximumNumberOfIterations = '2000'
 _C.ALIGN.MaximumNumberOfSamplingAttempts = '100'
 _C.ALIGN.FinalBSplineInterpolationOrder = '1'
 

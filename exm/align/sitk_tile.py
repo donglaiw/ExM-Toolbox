@@ -144,9 +144,13 @@ class sitkTile:
             
         flann = cv.FlannBasedMatcher(index_params,search_params)
         
-        kpf, desf = sift.detectAndCompute(fix.astype('uint8'), sift_mask)
-        kpm, desm = sift.detectAndCompute(mov.astype('uint8'), sift_mask)
-        matches = flann.knnMatch(desf,desm,k=k)
+        _, desf = sift.detectAndCompute(fix.astype('uint8'), sift_mask)
+        _, desm = sift.detectAndCompute(mov.astype('uint8'), sift_mask)
+        
+        if desf is not None and desm is not None:
+            matches = flann.knnMatch(desf,desm,k=k)
+        else:
+            return None
         
         
         if flann_mask is True:
