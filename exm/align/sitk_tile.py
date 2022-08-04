@@ -3,7 +3,8 @@ import numpy as np
 from yacs.config import CfgNode
 import cv2 as cv
 import os
-from scipy.ndimage import gaussian_filter
+
+import scipy.ndimage as ndi
 from skimage.morphology import convex_hull_image
 from scipy.spatial.distance import cdist
 
@@ -99,7 +100,7 @@ class sitkTile:
 
             for ind, z in enumerate(img):
                 # compute gaussian blur
-                gaus = gaussian_filter(z, sigma = sigma)
+                gaus = ndi.gaussian_filter(z, sigma = sigma)
                 # binarize img
                 binary = np.asarray(gaus > thrsh)
                 #get convex hull
@@ -112,7 +113,7 @@ class sitkTile:
         elif len(img.shape) == 2:
             
             # compute gaussian blur
-            gaus = gaussian_filter(img, sigma = sigma)
+            gaus = ndi.gaussian_filter(img, sigma = sigma)
             # binarize img
             binary = np.asarray(gaus > thrsh)
             #get convex hull
