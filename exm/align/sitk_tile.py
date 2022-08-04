@@ -69,7 +69,7 @@ class sitkTile:
     
     ### Debug compute 
     
-    def mutual_information(self,img1,img2, bins = 20):
+    def mutualIinformation(self,img1,img2, bins = 20):
         """ Mutual information for joint histogram
         """
         # get histogram
@@ -83,7 +83,13 @@ class sitkTile:
         nzs = pxy > 0 # Only non-zero pxy values contribute to the sum
         return np.sum(pxy[nzs] * np.log(pxy[nzs] / px_py[nzs]))
     
-    def computeMask(self, img, sigma = 2, thrsh = 200, kernel_size = 100):
+    def diceCoefficient(self, fix, mov, k = 1):
+        ''' Dice similarity coef for two segmented imgs, where k is binary value
+        '''
+        dice = np.sum(mov[fix==k])*2.0 / (np.sum(mov) + np.sum(fix))
+        return dice
+    
+    def computeConvexMask(self, img, sigma = 2, thrsh = 200, kernel_size = 100):
     
         mask = np.zeros(img.shape)
 
@@ -117,6 +123,18 @@ class sitkTile:
             mask[:, :] = dilation
     
         return mask
+    
+    def computeOtsuMask(self, img, pad = 1, filter_size = 10, dilation_iterations = 15):
+        '''compute otsu thrsh and perform median filtering and dilation
+        pad - what to set values after otsu thresholding to
+        filter_size - size of kernel for median filter
+        dilation iterations - number of iterations to perform dilation
+        '''
+        _,thresh = cv.threshold(img,0,pad,cv.THRESH_BINARY+cv.THRESH_OTSU)
+        med_filt = ndi.median_filter(thresh,filter_size)
+        dilate = ndi.binary_dilation(med_filt, iterations=dilation_iterations).astype('uint8')
+        
+        return dilate
     
     def computeMinNorm(self,point_cloud1, point_cloud2):
         
