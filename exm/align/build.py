@@ -3,6 +3,8 @@ import SimpleITK as sitk
 from yacs.config import CfgNode
 
 class alignBuild(sitkTile):
+    ''' build obj that inherits sitktile
+    '''
 
     def __init__(self, cfg: CfgNode):
 
@@ -13,6 +15,8 @@ class alignBuild(sitkTile):
         sitkTile.__init__(self, self.cfg)
 
     def createParameterMap(self, cfg = None, transform_type = None):
+        ''' creates parameter map from confiugration object passed to function
+        '''
         if cfg is not None:
             self.cfg = cfg
 
@@ -33,6 +37,8 @@ class alignBuild(sitkTile):
         return parameter_map
 
     def buildSitkTile(self, cfg = None, transform_type = None):
+        ''' builds sitktile obj by setting resulution and parameter map
+        '''
 
         if cfg is not None:
             self.cfg = cfg
