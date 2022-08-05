@@ -21,6 +21,8 @@ class sitkTile:
         self.num_iteration = None
     
     def setResolution(self, resolution= None):
+        '''set resolution for sitk, always in x,y,z order
+        '''
         # xyz-order
         if resolution is not None:
             self.resolution = resolution
@@ -28,36 +30,32 @@ class sitkTile:
             self.resolution = self.cfg.ALIGN.RESOLUTION
 
     #### Setup/IO
-    def setTransformType(self, transform_type = None, num_iteration = None):
-
-        if transform_type is not None:
-            self.transform_type = transform_type
-        else:
-            self.transform_type = self.cfg.ALIGN.TRANSFORM_TYPE
-
-        if num_iteration is not None:
-            self.num_iteration = num_iteration
-        else:
-            self.num_iteration = self.cfg.ALIGN.NUM_ITERATION
-
-        self.parameter_map = self.createParameterMap(self.transform_type, self.num_iteration)
-        self.elastix.SetParameterMap(self.parameter_map)
     
     def updateParameterMap(self, parameter_map=None):
+        ''' update param map if needed
+        '''
         if parameter_map is not None:
             self.parameter_map = parameter_map
         self.elastix.SetParameterMap(self.parameter_map)
 
     def getParameterMap(self):
+        ''' return param map currently being used
+        '''
         return self.parameter_map
 
     def readTransformMap(self, filename):
+        ''' read tform map from .txt file
+        '''
         return sitk.ReadParameterFile(filename)
 
     def writeTransformMap(self, filename, transform_map):
+        ''' write tform map to .txt file
+        '''
         return sitk.WriteParameterFile(transform_map, filename)
     
     def convertSitkImage(self, vol_np, res_np = None):
+        ''' convert numpy array to sitk vol
+        '''
 
         vol = sitk.GetImageFromArray(vol_np)
 
@@ -91,6 +89,13 @@ class sitkTile:
         return dice
     
     def computeConvexMask(self, img, sigma = 2, thrsh = 200, kernel_size = 100):
+        ''' compute mask by taking convex hull of a blurred binary image, then dilating.
+        note if there is any noise present in the image this will be included in the convex hull
+        and likely bias your mask.
+        sigma - sigma used for gaussian blur
+        thrsh - threshold used for binarizing 
+        kernel_size - kernel size used for dilation, note it is always a 2D obj and shares the same number of cols and rows
+        '''
     
         mask = np.zeros(img.shape)
 
@@ -138,6 +143,8 @@ class sitkTile:
         return dilate
     
     def computeMinNorm(self,point_cloud1, point_cloud2):
+        ''' compute the 2-norm of an array of distances of nearest neighbors from point cloud 1 to point cloud 2
+        '''
         
         temp1 = np.copy(point_cloud1)
         temp2 = np.copy(point_cloud2)
@@ -151,6 +158,17 @@ class sitkTile:
     
     def computeMinFlann(self,fix, mov, k = 1, flann_idx_kdtree = 0, flann_trees = 5, checks = 50,
                               sift_mask = None, flann_mask = False, ratio = .75):
+        
+        ''' compute the min distance and 2-norm of distance of nearest neighbors of the key points in a fixed image and their matches in a moving image
+        min distance is determind using descriptive vectors of key points returned by SIFT which are invariant to lighting and rotational changes
+        k - number of nearest neighbors, right now only works for 1
+        flann_idx_kdtree - flann algorithm to use
+        trees - number of flann tress
+        checks- number of checks to use in flann
+        sift_mask - mask to be used in SIFT computation
+        flann_mask - mask used for flann
+        ratio - ratio used in flann mask
+        '''
         
         sift = cv.SIFT_create()
         
@@ -203,6 +221,11 @@ class sitkTile:
         return norm, min_dist
                      
     def computeMaxMI(self, fix, mov, min_array, z_min = 0, num_minima = 5):
+        ''' given a z-slice, a volume and an array of minima find the index with max mutual info
+        min_array - array of minima
+        z_min - starting index of minima
+        num_minima - number of minima to be used in search
+        '''
                      
         min_sorted = np.sort(min_array)
         
@@ -213,7 +236,7 @@ class sitkTile:
             z_ind = np.argwhere(min_array == min_val)[0][0]+z_min
             mov_slice = mov[z_ind,:,:]
     
-            mi = self.mutual_information(fix,mov_slice)
+            mi = self.mutualInformation(fix,mov_slice)
             mi_result[z_ind] = mi
         
         max_mi_ind = max(mi_result, key=mi_result.get)
@@ -229,6 +252,13 @@ class sitkTile:
                             res_fix=None, res_move=None, 
                             mask_fix=None, mask_move=None, 
                             log = 'file', log_path = './sitk_log/'):
+        
+        ''' computes a transformaton matrix given two volumes and a set of masks
+        returns a transformation matrix for the given volumes
+        note that the log will be overwritten, see github for a solution with subprocesses:
+        https://github.com/SuperElastix/SimpleElastix/issues/104
+        '''
+        
         # work with mask correctly
         # https://github.com/SuperElastix/SimpleElastix/issues/198
         # not enough samples in the mask
@@ -284,9 +314,6 @@ class sitkTile:
         
         '''
         Warps a given volume using transformix and a given transformaiton matrix
-        
-        USE CASE:
-        
         
         '''
         
