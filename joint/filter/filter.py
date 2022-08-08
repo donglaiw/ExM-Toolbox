@@ -14,13 +14,13 @@ class Filter:
     this to compute the centroid of segment masks (eg: synapses) to serve as points
     in a point cloud for point-based registration.
     """
+
     def __init__(self, cfg: CfgNode):
         self.cfg = cfg
 
-    def denoiseImg(self,
-                f_volImg: str,
-                channel: int,
-                filterStrength: int=None) -> np.ndarray:
+    def denoiseImg(
+        self, f_volImg: str, channel: int, filterStrength: int = None
+    ) -> np.ndarray:
         """
         Denoise an image volume at a specific channel
 
@@ -32,18 +32,23 @@ class Filter:
 
         Returns a denoised image matrix
         """
-        self.channel = channel
-        assert os.path.exists(self.f_volImg), "The path: {f_volImg} does not exist"
-        self.imgVol = imread(f_volImg)[: ,channel]
+        assert os.path.exists(f_volImg), "The path: {f_volImg} does not exist"
+        imgVol = imread(f_volImg)[:, channel - 1]
         if filterStrength is not None:
             self.filterStrength = filterStrength
         else:
             self.filterStrength = self.cfg.FILTER.FILTER_STRENGTH
-        denoised = [cv.fastNlMeansDenoising(imgVol[z ,: ,: ,].astype('uint8'),
-                                            h=self.filterStrength,
-                                            templateWindowSize=7,
-                                            searchWindowSize=21)
-                    for z in range(imgVol.shape[0])]
+        denoised = [
+            cv.fastNlMeansDenoising(
+                imgVol[
+                    z,
+                    :,
+                    :,
+                ].astype("uint8"),
+                h=self.filterStrength,
+                templateWindowSize=7,
+                searchWindowSize=21,
+            )
+            for z in range(imgVol.shape[0])
+        ]
         return np.array(denoised)
-
-
