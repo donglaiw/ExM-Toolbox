@@ -52,3 +52,34 @@ class Filter:
             for z in range(imgVol.shape[0])
         ]
         return np.array(denoised)
+
+    def threshold(self, imgVol: np.ndarray, threshLower: int = None) -> np.ndarray:
+        """
+        adaptive thresholding on image volume to form a binary mask
+
+        Args:
+                imgVol:      Image volume as numpy matrix
+                threshLower: Lower bound on pixel value
+
+        Returns a binary thresholded image volume
+        """
+        assert imgVol.ndim == 3, "only volumetric images"
+        if threshLower is not None:
+            self.threshLower = threshLower
+        else:
+            self.threshLower = self.cfg.FILTER.THRESH_LOWER
+        thresholdVol = list()
+        for z in range(imgVol.shape[0]):
+            (T, thresholdSlice) = cv.threshold(
+                imgVol[
+                    z,
+                    :,
+                    :,
+                ],
+                thresh=self.threshLower,
+                maxval=self.cfg.FILTER.THRESH_UPPER,
+                type=cv.THRESH_BINARY_INV,
+            )
+            thresholdVol.append(255 - np.array(thresholdSlice))
+
+        return np.array(thresholdVol)
