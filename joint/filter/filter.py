@@ -83,3 +83,46 @@ class Filter:
             thresholdVol.append(255 - np.array(thresholdSlice))
 
         return np.array(thresholdVol)
+
+    def maskSmall(self, imgVol: np.ndarray, minIdx: int = -1) -> np.ndarray:
+        """
+        mask small noise artifacts in an image, ie: all except
+        the 'minIdx' largest areas
+
+        Args:
+                imgVol: image volume to be masked
+                minIdx: all except the minIdx areas are masked
+                        to the background
+
+        Returns a masked image volume
+        """
+        self.minIdx = self.cfg.FILTER.MASK_INDEX
+        assert minIdx > 1, "minimum area index must be greater than 1"
+
+        maskedImage = []
+        for z in range(imgVol.shape[0]):
+            upIdx = list()
+            labeled_img = label(
+                imgVol[
+                    z,
+                    :,
+                    :,
+                ],
+                background=0,
+            ).astype("uint8")
+            indices, area = np.unique(labeled_img, return_counts=True)
+            sortedArea = sorted(area)
+
+            for i in range(len(area)):
+                for j in range(2, minIdx):
+                    if area[i] == sortedArea[len(area) - j]:
+                        upIdx.append(i)
+
+            lowIdx = (idx for idx in range(len(area)) if idx not in upIdx)
+
+            for idx in lowIdx:
+                labeled_img[np.where(labeled_img == idx)] = 0
+
+            maskedImage.append(labeled_img)
+
+        return np.array(maskedImage)
