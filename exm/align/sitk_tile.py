@@ -136,9 +136,20 @@ class sitkTile:
         filter_size - size of kernel for median filter
         dilation iterations - number of iterations to perform dilation
         '''
-        _,thresh = cv.threshold(img,0,pad,cv.THRESH_BINARY+cv.THRESH_OTSU)
-        med_filt = ndi.median_filter(thresh,filter_size)
-        dilate = ndi.binary_dilation(med_filt, iterations=dilation_iterations).astype('uint8')
+        if img.size > 2:
+            
+            dilate = np.zeros(img.shape)
+            
+            for ind,z in enumerate(img):
+        
+                _,thresh = cv.threshold(z,0,pad,cv.THRESH_BINARY+cv.THRESH_OTSU)
+                med_filt = ndi.median_filter(thresh,filter_size)
+                dilate2d = ndi.binary_dilation(med_filt, iterations=dilation_iterations).astype('uint8')
+                dilate[ind,:,:] = dilate2d
+        else:
+            _,thresh = cv.threshold(img,0,pad,cv.THRESH_BINARY+cv.THRESH_OTSU)
+            med_filt = ndi.median_filter(thresh,filter_size)
+            dilate = ndi.binary_dilation(med_filt, iterations=dilation_iterations).astype('uint8')
         
         return dilate
     
