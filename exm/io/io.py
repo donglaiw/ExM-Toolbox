@@ -8,6 +8,7 @@ from tifffile import imread
 from .image import imAdjust
 from PIL import Image
 import skimage.measure
+from IPython.display import Image as Img2
 
 def mkdir(fn,opt=0):
     if opt == 1 :# until the last /
@@ -177,7 +178,7 @@ def downsample(arr, block_size):
 
     return new_array
 
-def parse_sitklog(log_path: str):
+def parseSitkLog(log_path: str):
     
     result_metric = []
     result_stepsize = []
@@ -192,4 +193,16 @@ def parse_sitklog(log_path: str):
                 result_metric.append(splt[1])
                 result_stepsize.append(splt[3])
                 
+    result_metric = np.asarray(result_metric, dtype = 'float32')
+    result_stepsize = np.asarray(result_stepsize, dtype = 'float32')
+                
     return result_metric, result_stepsize
+
+def saveGif(img1, img2, filename):
+    im1 =  Image.fromarray(img1)
+    im2 =  Image.fromarray(img2)
+    im1.save(filename, format='GIF',
+                   append_images=[im2],
+                   save_all=True,
+                   duration=300, loop=0)
+    return Img2(filename=filename)
