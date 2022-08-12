@@ -68,7 +68,7 @@ class sitkTile:
     
     ### Debug compute 
     
-    def mutualIinformation(self,img1,img2, bins = 20):
+    def mutualInformation(self,img1,img2, bins = 20):
         """ Mutual information for joint histogram
         """
         # get histogram
