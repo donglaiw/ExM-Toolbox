@@ -22,11 +22,11 @@ _C.FILTER.DELTA = 230
 _C.INTENSITY = CN()
 # elastix params
 _C.INTENSITY.RESOLUTION = [0.1625, 0.1625, 0.2500]
-_C.INTENSITY.TRANSFORM_TYPE = ['affine']
-_C.INTENSITY.NumberOfSamplesForExactGradient = '100000'
-_C.INTENSITY.MaximumNumberOfIterations = '10000'
-_C.INTENSITY.MaximumNumberOfSamplingAttempts = '15'
-_C.INTENSITY.FinalBSplineInterpolationOrder = '1'
+_C.INTENSITY.TRANSFORM_TYPE = ["affine"]
+_C.INTENSITY.NumberOfSamplesForExactGradient = "100000"
+_C.INTENSITY.MaximumNumberOfIterations = "10000"
+_C.INTENSITY.MaximumNumberOfSamplingAttempts = "15"
+_C.INTENSITY.FinalBSplineInterpolationOrder = "1"
 
 # point
 _C.POINT = CN()
@@ -34,12 +34,18 @@ _C.POINT = CN()
 _C.POINT.NUM_POINTS = 7
 _C.POINT.MAX_ITER = 50
 _C.POINT.TOLERANCE = 1
+_C.POINT.CHANNEL = 1
+# params for image cleaning (point registration)
+_C.POINT.FILTER_STRENGTH_FIX = 70
+_C.POINT.FILTER_STRENGTH_MOVE = 70
+_C.POINT.THRESH_LOWER_FIX = 20
+_C.POINT.THRESH_LOWER_MOVE = 80
 
 # dataset
 _C.DATASET = CN()
 # dataset paths, fovs, base channels
-_C.DATASET.VOL_FIX_PATH = '/path/to/vol_fix'
-_C.DATASET.VOL_MOVE_PATH = '/path/to/vol_move'
+_C.DATASET.VOL_FIX_PATH = "/path/to/vol_fix"
+_C.DATASET.VOL_MOVE_PATH = "/path/to/vol_move"
 _C.DATASET.BASE_CHANNEL = None
 
 
@@ -48,4 +54,3 @@ def get_cfg_defaults():
     # return a clone so that variables won't be altered.
     # this is for the "local variable use pattern"
     return _C.clone()
-
