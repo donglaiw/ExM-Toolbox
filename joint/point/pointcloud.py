@@ -2,9 +2,10 @@ import os
 import cc3d
 import numpy as np
 import cv2 as cv
+from tqdm import tqdm
 from tiffile import imread
-from scipy.spatial.distance import cdist
 from yacs.config import CfgNode
+from scipy.spatial.distance import cdist
 from skimage.measure import label, regionprops
 
 
@@ -41,7 +42,7 @@ class PointCloud:
             print("Image must have either 3 or 4 dimensions")
             return
 
-        for i in range(im_channel.shape[0]):
+        for i in tqdm(range(im_channel.shape[0])):
             denoised = cv.fastNlMeansDenoising(
                 im_channel[
                     i,
@@ -118,6 +119,7 @@ class PointCloud:
         """
 
         # fixed point cloud
+        print(f"Generating fixed point cloud...")
         fixVol = self.clean(
             fpath=self.cfg.DATASET.VOL_FIX_PATH,
             h=self.cfg.POINT.FILTER_STRENGTH_FIX,
@@ -126,8 +128,10 @@ class PointCloud:
         )
         fixSeg = self.segment(img=fixVol, delta=self.cfg.FILTER.DELTA)
         fixCloud = self.genPoints(fixSeg)
+        print(f"Done!")
 
         # moving point cloud
+        print(f"Generating moving point cloud...")
         moveVol = self.clean(
             fpath=self.cfg.DATASET.VOL_MOVE_PATH,
             h=self.cfg.POINT.FILTER_STRENGTH_MOVE,
@@ -136,5 +140,6 @@ class PointCloud:
         )
         moveSeg = self.segment(img=moveVol, delta=self.cfg.FILTER.DELTA)
         moveCloud = self.genPoints(moveSeg)
+        print(f"Done!")
 
         return fixCloud, moveCloud
