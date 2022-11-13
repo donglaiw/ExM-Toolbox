@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from math import inf
 from yacs.config import CfgNode
@@ -109,6 +110,32 @@ def getAllIdx(cfg: CfgNode) -> dict:
     print(f"Generating corresponding point pairs...")
     pairs = corrPts(cloud1=fixed_cloud, cloud2=moving_cloud, cfg=cfg)
     print(f"Done!")
+
+    # save corresponding point pairs
+    corr_fix, corr_move = list(), list()
+    for pt in pairs:
+        corr_fix.append(pt["point0"])
+        corr_move.append(pt["point1"])
+    # get fov and image round
+    file_name = cfg.DATASET.VOL_MOVE_PATH[cfg.DATASET.VOL_MOVE_PATH.rfind("/") + 1 :]
+    fov = file_name[: file_name.find("_")]
+    round_name = file_name[file_name.find("_") + 1 :]
+    round_num = round_name[: round_name.find("_") :]
+
+    # create directory if it does not exist
+    if not os.path.exists(f"./results/points/{fov}/{round_num}"):
+        os.makedirs(f"./results/points/{fov}/{round_num}")
+
+    np.savetxt(
+        f"./results/points/{fov}/{round_num}/round001_warped.txt",
+        np.array(corr_fix),
+        delimiter=" ",
+    )  # fixed volume point set
+    np.savetxt(
+        f"./results/points/{fov}/{round_num}/{round_num}_warped.txt",
+        np.array(corr_move),
+        delimiter=" ",
+    )  # moving volume point set
 
     # get point indices for every dimension
     final_indices = dict()
