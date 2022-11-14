@@ -2,6 +2,7 @@ import os
 import SimpleITK as sitk
 from yacs.config import CfgNode
 
+
 class sitkTile:
     # 1. estimate transformation between input volumes
     # 2. warp one volume with the transformation
@@ -9,67 +10,51 @@ class sitkTile:
         self.elastix = sitk.ElastixImageFilter()
         self.transformix = sitk.TransformixImageFilter()
         self.cfg = cfg
-        self.resolution = None
         self.parameter_type = None
         self.transform_type = None
-        self.num_iteration = None
 
+    # set resolution
     def setResolution(self, resolution=None):
-        # xyz-order
-        if resolution is not None:
-            self.resolution = resolution
-        else:
-            self.resolution = self.cfg.INTENSITY.RESOLUTION
+        self.resolution = self.cfg.INTENSITY.RESOLUTION
 
     # setup
-    def setTransformType(self, transform_type=None, num_iterations=None):
-        if transform_type is not None:
-            self.transform_type = transform_type
-        else:
-            self.transform_type = self.cfg.TRANSFORM_TYPE
+    def setTransformType(self, transform_type, num_iterations=-1):
+        self.transform_type = self.cfg.TRANSFORM_TYPE
+        self.parameter_map = self.createParameterMap(transform_type, num_iteration)
+        self.elastix.setParameterMap(self.parameter_map)
 
-        if num_iterations is not None:
-            self.num_iterations = num_iterations
-        else:
-            self.num_iterations = self.cfg.INTENSITY.NUM_ITERATIONS
-
-        self.parameter_map = self.createParameterMap(self.transform_type, self.num_iteration)
-        self.elastix.setParameterMap(self.paramter_map)
-
+    # update parameter map
     def updateParameterMap(self, parameter_map=None):
         if parameter_map is not None:
-            self.parameter_type = parameter_map
+            self.parameter_map = parameter_map
         self.elastix.SetParameterMap(self.parameter_map)
 
+    # get parameter map
     def getParameterMap(self):
         return self.parameter_map
 
+    # read transformation map
     def readTransformMap(self, filename):
         return sitk.ReadParameterFile(filename)
 
+    # write transformation map
     def writeTransformMap(self, filename, transform_type):
         return sitk.WriteParameterFile(transform_type, filename)
 
-    def createParameterMap(self, transform_type=None, num_iterations=None):
+    # create a parameter map
+    def createParameterMap(self, transform_type=None, num_iterations=-1):
         if transform_type is not None:
             self.transform_type = transform_type
-        else:
-            self.transform_type = self.cfg.TRANSFORM_TYPE
-
-        if num_iterations is not None:
-            self.num_iterations = num_iterations
-        else:
-            self.num_iterations = self.cfg.NUM_ITERATIONS
 
         if len(self.transform_type) == 1:
-            parameter_type = sitk.GetDefaultParameterMap(self.transform_type[0])
-            parameter_type['NumberOfSampleForExactGradient'] = ['5000']
+            parameter_type = sitk.GetDefaultParameterMap(transform_type[0])
+            parameter_type["NumberOfSampleForExactGradient"] = ["5000"]
             if num_iterations > 0:
-                parameter_map['MaximumNumberOfIterations'] = [str(num_iterations)]
+                parameter_map["MaximumNumberOfIterations"] = [str(num_iterations)]
             else:
-                parameter_map['MaximumNumberOfIterations'] = ['5000']
-            parameter_map['MaximumNumberOfSamplingAttempts'] = ['100']
-            parameter_map['FinalBSplineInterpolationOrder'] = ['1']
+                parameter_map["MaximumNumberOfIterations"] = ["5000"]
+            parameter_map["MaximumNumberOfSamplingAttempts"] = ["100"]
+            parameter_map["FinalBSplineInterpolationOrder"] = ["1"]
         else:
             parameter_map = sitk.VectorOfParameterMap()
             for trans in transform_type:
@@ -82,48 +67,50 @@ class sitkTile:
         vol.set_spacing(res_np)
         return vol
 
-    def computeTransformMap(self, vol_fix, vol_move, res_fix=None, res_move=None, mask_fix=None, mask_move=None, log='file', log_path='.sitk/log'):
+    def computeTransformMap(
+        self,
+        vol_fix,
+        vol_move,
+        res_fix=None,
+        res_move=None,
+        mask_fix=None,
+        mask_move=None,
+    ):
         # work with mask correctly
         # https://github.com/SuperElastix/SimpleElastix/issues/198
         # not enough samples in the mask
-        if log == 'console':
-            self.elastix.SetLogToConsole(True)
-            self.elastix.SetLogToFile(False)
-        elif log == 'file':
-            self.elastix.SetLogToConsole(False)
-            self.elastix.SetLogToFile(True)
-            if os.path.isdir(log_path):
-                self.elastix.SetOutputDirectory(log_path)
-            else:
-                os.mkdir(log_path)
-                self.elastix.SetOutputDirectory(log_path)
-        elif log is None:
-            self.elastix.SetLogToFile(False)
-            self.elastix.SetLogToConsole(False)
-        else:
-            raise KeyError(f"log must be console, file or None not {log}")
+        self.elastix.SetParameter("ImageSampler", "RandomSparseMask")
+        self.elastix.SetLogToConsole(False)
 
         if res_fix is None:
             res_fix = self.resolution
         if res_move is None:
             res_move = self.resolution
 
-        # 2. load volume
+        # load volumes
         vol_fix = self.convertSitkImage(vol_fix, res_fix)
         self.elastix.SetFixedImage(vol_fix)
+        vol_move = self.convertSitkImage(vol_move, res_move)
+        self.elastix.SetMovingImage(vol_move)
+
+        # image mask
         if mask_fix is not None:
             mask_fix = self.convertSitkImage(mask_fix, res_fix)
             mask_fix.CopyInformation(vol_fix)
             self.elastix.SetFixedMask(mask_fix)
+        if mask_move is not None:
+            mask_move = self.convertSitkImage(mask_move, res_move)
+            mask_move.CopyInformation(vol_move)
+            self.elastix.SetMovingMask(mask_move)
 
-        # 3. compute transformation
+        # compute transformation
         self.elastix.Execute()
 
-        # 4. output transformation parameter
+        # output transformation parameter
         return self.elastix.GetTransformParameterMap()[0]
 
     def warpVolume(self, vol_move, transform_map, res_move=None):
-        if log == 'console':
+        if log == "console":
             self.transformix.SetLogToConsole(True)
         else:
             self.transformix.LogToFileOn()
@@ -134,4 +121,3 @@ class sitkTile:
         self.transformix.Execute()
         out = sitk.GetArrayFromImage(self.transformix.GetResultImage())
         return out
-
