@@ -23,10 +23,10 @@ _C.INTENSITY = CN()
 # elastix params
 _C.INTENSITY.RESOLUTION = [0.1625, 0.1625, 0.2500]
 _C.INTENSITY.TRANSFORM_TYPE = ["affine"]
-_C.INTENSITY.NumberOfSamplesForExactGradient = "100000"
-_C.INTENSITY.MaximumNumberOfIterations = "10000"
-_C.INTENSITY.MaximumNumberOfSamplingAttempts = "15"
-_C.INTENSITY.FinalBSplineInterpolationOrder = "1"
+_C.INTENSITY.NumberOfSamplesForExactGradient = ["100000"]
+_C.INTENSITY.MaximumNumberOfIterations = ["10000"]
+_C.INTENSITY.MaximumNumberOfSamplingAttempts = ["15"]
+_C.INTENSITY.FinalBSplineInterpolationOrder = ["1"]
 
 # point
 _C.POINT = CN()
