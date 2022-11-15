@@ -19,9 +19,9 @@ class sitkTile:
 
     # setup
     def setTransformType(self, transform_type, num_iterations=-1):
-        self.transform_type = self.cfg.TRANSFORM_TYPE
-        self.parameter_map = self.createParameterMap(transform_type, num_iteration)
-        self.elastix.setParameterMap(self.parameter_map)
+        self.transform_type = self.cfg.INTENSITY.TRANSFORM_TYPE
+        self.parameter_map = self.createParameterMap(transform_type, num_iterations)
+        self.elastix.SetParameterMap(self.parameter_map)
 
     # update parameter map
     def updateParameterMap(self, parameter_map=None):
@@ -47,8 +47,8 @@ class sitkTile:
             self.transform_type = transform_type
 
         if len(self.transform_type) == 1:
-            parameter_type = sitk.GetDefaultParameterMap(transform_type[0])
-            parameter_type["NumberOfSampleForExactGradient"] = ["5000"]
+            parameter_map = sitk.GetDefaultParameterMap(transform_type[0])
+            parameter_map["NumberOfSampleForExactGradient"] = ["5000"]
             if num_iterations > 0:
                 parameter_map["MaximumNumberOfIterations"] = [str(num_iterations)]
             else:
@@ -64,7 +64,7 @@ class sitkTile:
     # estimate and warp with transformation
     def convertSitkImage(self, vol_np, res_np):
         vol = sitk.GetImageFromArray(vol_np)
-        vol.set_spacing(res_np)
+        vol.SetSpacing(res_np)
         return vol
 
     def computeTransformMap(
@@ -110,10 +110,7 @@ class sitkTile:
         return self.elastix.GetTransformParameterMap()[0]
 
     def warpVolume(self, vol_move, transform_map, res_move=None):
-        if log == "console":
-            self.transformix.SetLogToConsole(True)
-        else:
-            self.transformix.LogToFileOn()
+        self.transformix.SetLogToConsole(False)
         if res_move is None:
             res_move = self.resolution
         self.transformix.SetTransformParameterMap(transform_map)

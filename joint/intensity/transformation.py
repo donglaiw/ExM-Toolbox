@@ -52,7 +52,7 @@ def computeTform(cfg: CfgNode):
     elastixImageFilter.SetMovingImage(moving_vol)
 
     # compute transformation map
-    elastixImageFilter.execute()
+    elastixImageFilter.Execute()
     param_map = elastixImageFilter.GetTransformParameterMap()[0]
     param_name = file_name[file_name.rfind("/") + 1 :]
     param_file = param_name[: param_name.rfind(".")] + ".txt"
@@ -65,7 +65,12 @@ def computeTform(cfg: CfgNode):
 
 
 def warpAll(
-    volMove: str, outputName: str, tformPath: str, resolution: list, sitkTile=sitkTile()
+    cfg: CfgNode,
+    volMove: str,
+    outputName: str,
+    outDir: str,
+    tformPath: str,
+    resolution: list,
 ):
     """
     Use transformation map to warp all channels of
@@ -74,15 +79,17 @@ def warpAll(
     Arguments:
         volMove:    path to moving volume
         outputName: name of output volume
+        outDir:     path of output directory
         tformPath:  path to transformation map
         resolution: resolution scale of image volume
     """
-    sitkTile.setResolution(resolution)
-    sitkTile.setTransformType(transform_type=["affine"])
-    tform = sitkTile.readTransformMap(tformPath)
+    sitktile = sitkTile(cfg)
+    sitktile.setResolution(resolution)
+    sitktile.setTransformType(transform_type=["affine"])
+    tform = sitktile.readTransformMap(tformPath)
     vol_move = imread(volMove)
-    for channel in tqdm(range(vol_move.shape[1]), desc=f"warping channel {channel}"):
-        result = sitkTile.warpVolume(vol_move[:, channel], tform)
+    for channel in tqdm(range(vol_move.shape[1])):
+        result = sitktile.warpVolume(vol_move[:, channel], tform)
         imsave(
-            f"{outputName}_ch0{channel+1}_warped.tif", result.astype("uint16")
+            f"{outDir}{outputName}_ch0{channel+1}_warped.tif", result.astype("uint16")
         )  # save as a 16-bit image
