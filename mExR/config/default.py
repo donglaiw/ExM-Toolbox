@@ -43,17 +43,18 @@ _C.POINT.FILTER_STRENGTH_FIX = 50
 _C.POINT.FILTER_STRENGTH_MOVE = 80
 _C.POINT.THRESH_LOWER_FIX = 70
 _C.POINT.THRESH_LOWER_MOVE = 50
+_C.POINT.TARGET_CHANNEL = 1
 
 # dataset
 _C.DATASET = CN()
 # dataset paths, fovs, base channels
 _C.DATASET.VOL_FIX_PATH = (
-    "/mp/nas3/Margaret_mouse_new/2022.05_synapses/ROI3_round002_pp.tif"
+    "/mp/nas3/Margaret_mouse_new/2022.08_synapses/ROI5_round001_pp.tif"
 )
 _C.DATASET.VOL_MOVE_PATH = (
-    "/home/ckapoor/marg_new/warped-synapses/ROI3_round005_ch01_warped.tif"
+    "/mp/nas3/Margaret_mouse_new/2022.08_synapses/ROI5_round002_pp.tif"
 )
-_C.DATASET.BASE_CHANNEL = 1
+_C.DATASET.BASE_CHANNEL = 3
 
 
 def get_cfg_defaults():
