@@ -42,7 +42,7 @@ def rbf_interpolate(
     return rbf(cspace)
 
 
-def warp_image(cfg: CfgNode):
+def warpImage(cfg: CfgNode):
     """
     Combine all helper functions to warp the image volume
     """
@@ -64,7 +64,9 @@ def warp_image(cfg: CfgNode):
 
     # reading moving image volume
     print(f"Reading moving image volume...")
-    f_vol_move = imread(cfg.DATASET.VOL_MOVE_PATH)
+    f_vol_move = imread(
+        f"./results/coarse/{fov}_{round_num}_ch0{cfg.POINT.TARGET_CHANNEL}_warped.tif"
+    )
     print(f"Done!")
 
     # generate pixel mesh
