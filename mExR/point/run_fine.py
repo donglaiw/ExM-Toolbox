@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from yacs.config import CfgNode
 from .interpolate import getAllIdx
@@ -64,10 +65,12 @@ def warpImage(cfg: CfgNode):
 
     # reading moving image volume
     print(f"Reading moving image volume...")
-    f_vol_move = imread(
+    vol_name = (
         f"./results/coarse/{fov}_{round_num}_ch0{cfg.POINT.TARGET_CHANNEL}_warped.tif"
     )
+    f_vol_move = imread(vol_name)
     print(f"Done!")
+    print(f"moving volume: {vol_name}")
 
     # generate pixel mesh
     zz, yy, xx = np.meshgrid(
@@ -77,15 +80,21 @@ def warpImage(cfg: CfgNode):
         indexing="ij",
     )
 
-    print(f"Generating coordinate mesh, this might take a while...")
-    cspace = np.stack(
-        [
-            x
-            for x in np.ndindex(
-                f_vol_move.shape[0], f_vol_move.shape[1], f_vol_move.shape[2]
-            )
-        ]
-    )
+    if not os.path.exists("./results/mesh.npy"):
+        print(f"Generating coordinate mesh, this might take a while...")
+        cspace = np.stack(
+            [
+                x
+                for x in np.ndindex(
+                    f_vol_move.shape[0], f_vol_move.shape[1], f_vol_move.shape[2]
+                )
+            ]
+        )
+        np.save("./results/mesh.npy", cspace, allow_pickle=True)
+    else:
+        print(f"Loading coordinate mesh...")
+        with open("./results/mesh.npy", "rb") as f:
+            cspace = np.load(f)
     print(f"Done!")
 
     # compute interpolation vectors
@@ -107,9 +116,17 @@ def warpImage(cfg: CfgNode):
     # warp image
     print(f"Warping image volume...")
     move_warp = warp(
-        f_vol_move, np.array([zz + dz, yy + dy, xx + dx]), order=3, preserve_range=True
+        imread(vol_name),
+        np.array([zz + dz, yy + dy, xx + dx]),
+        order=3,
+        preserve_range=True,
     )
     print(f"Done!")
 
     # save image volume
-    imwrite(f"./results/fine/{file_name}", move_warp.astype("uint16"))
+    if not os.path.exists("./results/fine/"):
+        os.makedirs("./results/fine/")
+    imwrite(
+        f"./results/fine/{fov}_{round_num}_ch0{cfg.POINT.TARGET_CHANNEL}_warped.tif",
+        move_warp.astype("uint16"),
+    )
