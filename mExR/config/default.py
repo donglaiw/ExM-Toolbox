@@ -17,8 +17,8 @@ _C.FILTER.THRESH_LOWER = 60
 _C.FILTER.THRESH_UPPER = 255
 _C.FILTER.MASK_INDEX = 6
 _C.FILTER.DELTA = 230
-_C.FILTER.DENOISE = True
-_C.FILTER.MASK = True
+_C.FILTER.DENOISE = False
+_C.FILTER.MASK = False
 
 # intensity
 _C.INTENSITY = CN()
@@ -49,12 +49,13 @@ _C.POINT.TARGET_CHANNEL = 1
 _C.DATASET = CN()
 # dataset paths, fovs, base channels
 _C.DATASET.VOL_FIX_PATH = (
-    "/mp/nas3/Margaret_mouse_new/2022.08_synapses/ROI5_round001_pp.tif"
+    "/mp/nas3/Margaret_mouse_new/2022.08_synapses/ROI1_round001_pp.tif"
 )
 _C.DATASET.VOL_MOVE_PATH = (
-    "/mp/nas3/Margaret_mouse_new/2022.08_synapses/ROI5_round002_pp.tif"
+    "/mp/nas3/Margaret_mouse_new/2022.08_synapses/ROI1_round0011_pp.tif"
 )
 _C.DATASET.BASE_CHANNEL = 3
+_C.DATASET.MOVE_BASE_CHANNEL = 0
 
 
 def get_cfg_defaults():

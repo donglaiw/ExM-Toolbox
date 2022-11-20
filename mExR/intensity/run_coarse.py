@@ -13,7 +13,8 @@ def saveMask(cfg: CfgNode):
     """
     print(f"Reading moving volume...")
     move_vol = imread(cfg.DATASET.VOL_MOVE_PATH)
-    move_vol_anchor = move_vol[:, 3]  # need to change
+    ref_channel = cfg.DATASET.MOVE_BASE_CHANNEL
+    move_vol_anchor = move_vol[:, ref_channel]
     print(f"Done!\n")
 
     print(f"Masking volume...")
@@ -65,7 +66,7 @@ def warpVol(cfg: CfgNode):
         cfg=cfg,
         volMove=volMove,
         outputName=outputName,
-        outDir="./results/coarse",
+        outDir="./results/coarse/",
         tformPath=tformPath,
         resolution=cfg.INTENSITY.RESOLUTION,
     )
