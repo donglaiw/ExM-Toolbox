@@ -34,7 +34,7 @@ def computeTform(cfg: CfgNode):
         elastixImageFilter.SetParameterMap(param_map)
 
     # set fixed image
-    fixed_vol_np1 = imread(cfg.DATASET.VOL_FIX_PATH)[:, 0]
+    fixed_vol_np1 = imread(cfg.DATASET.VOL_FIX_PATH)[:, cfg.DATASET.FIX_BASE_CHANNEL]
     print(f"Fixed volume shape: {fixed_vol_np1.shape}")
     fixed_vol = sitk.GetImageFromArray(fixed_vol_np1)
     fixed_vol.SetSpacing(m_resolution)
