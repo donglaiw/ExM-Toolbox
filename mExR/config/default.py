@@ -35,7 +35,6 @@ _C.POINT = CN()
 # point-based registration params
 _C.POINT.NUM_POINTS = 20
 _C.POINT.MAX_ITER = 1500
-_C.POINT.TOLERANCE = 1
 _C.POINT.CHANNEL = 2
 _C.POINT.NN_DIST = 6
 # params for image cleaning (point registration)
@@ -49,12 +48,10 @@ _C.POINT.TARGET_CHANNEL = 1
 _C.DATASET = CN()
 # dataset paths, fovs, base channels
 _C.DATASET.VOL_FIX_PATH = (
-    "/mp/nas3/Margaret_mouse_new/2022.08_synapses/ROI1_round001_pp.tif"
+    "/mp/nas3/Margaret_mouse_new/2022.08_synapses/ROI4_round001_pp.tif"
 )
-_C.DATASET.VOL_MOVE_PATH = (
-    "/mp/nas3/Margaret_mouse_new/2022.08_synapses/ROI1_round0011_pp.tif"
-)
-_C.DATASET.BASE_CHANNEL = 3
+_C.DATASET.VOL_MOVE_PATH = ('/mp/nas3/Margaret_mouse_new/2022.08_synapses/ROI4_round0010_pp.tif')
+_C.DATASET.FIX_BASE_CHANNEL = 3
 _C.DATASET.MOVE_BASE_CHANNEL = 0
 
 

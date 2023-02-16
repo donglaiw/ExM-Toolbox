@@ -7,6 +7,7 @@ from scipy.spatial.distance import cdist
 from scipy.interpolate import RBFInterpolator
 
 
+
 def corrPts(cloud1: np.ndarray, cloud2: np.ndarray, cfg: CfgNode) -> list:
     """
     Find corresponding point pairs between cloud1
@@ -46,17 +47,18 @@ def corrPts(cloud1: np.ndarray, cloud2: np.ndarray, cfg: CfgNode) -> list:
     return pairs
 
 
-def getPointIdx(corrPair: list, dim: int, num_pts: int, cfg: CfgNode):
-    """
-    a random selection of points from the corresponding point
-    pair list, and returning the set of point indices with
-    minimum error after interpolation
 
+def getPointIdx(corrPair: list, dim: int, num_pts: int, cfg: CfgNode):
+    """ 
+    a random selection of points from the corresponding point 
+    pair list, and returning the set of point indices with 
+    minimum error after interpolation
+    
     Arguments:
         corrPair: list of corresponding point pairs
         dim:      [z, y, x] dimensions for point indices
         cfg:      configuration file
-
+    
     returns a list of point indices for the specified dimension
     """
     source, target = list(), list()
@@ -70,9 +72,11 @@ def getPointIdx(corrPair: list, dim: int, num_pts: int, cfg: CfgNode):
     target_index = np.empty((num_pts))
     actual_error = np.mean(abs(source[:, dim] - target[:, dim]))
     min_error = inf
-
+    
     for i in range(cfg.POINT.MAX_ITER):
-        index_small = np.random.choice(range(len(target)), int(num_pts), replace=False)
+        index_small = np.random.choice(
+            range(len(target)), int(num_pts), replace=False
+        )
         target_small = target[index_small, :]
         source_small = source[index_small, :]
         d_small = np.asarray(target_small - source_small)[:, dim]
@@ -94,59 +98,49 @@ def getPointIdx(corrPair: list, dim: int, num_pts: int, cfg: CfgNode):
             continue
 
     if abs(min_error - actual_error) < 0.5:
-        # print(f"Final error: {min_error}")
+        #print(f"Final error: {min_error}")
         if min_error is not None:
             return min_error, target_index
-
+   
 
 def getAllIdx(cfg: CfgNode) -> dict:
     # generate point clouds
-    print(f"Generating point clouds...")
+    print(f'Generating point clouds...')
     pc = PointCloud(cfg)
     fixed_cloud, moving_cloud = pc.genPointClouds()
-    print(f"Done!")
-
+    print(f'Done!')
+    
     # generate corresponding pairs
-    print(f"Generating corresponding point pairs...")
+    print(f'Generating corresponding point pairs...')
     pairs = corrPts(cloud1=fixed_cloud, cloud2=moving_cloud, cfg=cfg)
-    print(f"Done!")
-
+    print(f'Done!')
+    
     # save corresponding point pairs
     corr_fix, corr_move = list(), list()
     for pt in pairs:
-        corr_fix.append(pt["point0"])
-        corr_move.append(pt["point1"])
+        corr_fix.append(pt['point0'])
+        corr_move.append(pt['point1'])
     # get fov and image round
-    file_name = cfg.DATASET.VOL_MOVE_PATH[cfg.DATASET.VOL_MOVE_PATH.rfind("/") + 1 :]
-    fov = file_name[: file_name.find("_")]
-    round_name = file_name[file_name.find("_") + 1 :]
-    round_num = round_name[: round_name.find("_") :]
-
+    file_name = cfg.DATASET.VOL_MOVE_PATH[cfg.DATASET.VOL_MOVE_PATH.rfind('/')+1:]
+    fov = file_name[:file_name.find('_')]
+    round_name = file_name[file_name.find('_')+1:]
+    round_num = round_name[:round_name.find('_'):]
+    
     # create directory if it does not exist
-    if not os.path.exists(f"./results/points/{fov}/{round_num}"):
-        os.makedirs(f"./results/points/{fov}/{round_num}")
-
-    np.savetxt(
-        f"./results/points/{fov}/{round_num}/round001_warped.txt",
-        np.array(corr_fix),
-        delimiter=" ",
-    )  # fixed volume point set
-    np.savetxt(
-        f"./results/points/{fov}/{round_num}/{round_num}_warped.txt",
-        np.array(corr_move),
-        delimiter=" ",
-    )  # moving volume point set
-
+    if not os.path.exists(f'./results/points/{fov}/{round_num}'):
+        os.makedirs(f'./results/points/{fov}/{round_num}')
+        
+    np.savetxt(f'./results/points/{fov}/{round_num}/round001_warped.txt', np.array(corr_fix), delimiter=' ') # fixed volume point set
+    np.savetxt(f'./results/points/{fov}/{round_num}/{round_num}_warped.txt', np.array(corr_move), delimiter=' ') # moving volume point set
+    
     # get point indices for every dimension
     final_indices = dict()
 
     for dim in range(2, -1, -1):
         idx_dict = dict()
-        for num_pts in range(5, cfg.POINT.NUM_POINTS):
+        for num_pts in range(7, cfg.POINT.NUM_POINTS):
             try:
-                error, idx = getPointIdx(
-                    corrPair=pairs, dim=dim, num_pts=num_pts, cfg=cfg
-                )
+                error, idx = getPointIdx(corrPair=pairs, dim=dim, num_pts=num_pts, cfg=cfg)
             except:
                 continue
             if error is not None:
@@ -154,10 +148,10 @@ def getAllIdx(cfg: CfgNode) -> dict:
 
         # select point indices with minimum error
         if dim == 2:
-            final_indices["z"] = idx_dict[sorted(idx_dict.keys())[0]]
+            final_indices['z'] = idx_dict[sorted(idx_dict.keys())[0]]
         if dim == 1:
-            final_indices["y"] = idx_dict[sorted(idx_dict.keys())[0]]
+            final_indices['y'] = idx_dict[sorted(idx_dict.keys())[0]]
         if dim == 0:
-            final_indices["x"] = idx_dict[sorted(idx_dict.keys())[0]]
+            final_indices['x'] = idx_dict[sorted(idx_dict.keys())[0]]
 
-    return final_indices
+    return final_indices 

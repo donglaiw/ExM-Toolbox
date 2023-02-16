@@ -119,7 +119,7 @@ class PointCloud:
         """
 
         # fixed point cloud
-        print(f"Generating fixed point cloud...")
+        print(f'Generating fixed point cloud...')
         fixVol = self.clean(
             fpath=self.cfg.DATASET.VOL_FIX_PATH,
             h=self.cfg.POINT.FILTER_STRENGTH_FIX,
@@ -128,10 +128,10 @@ class PointCloud:
         )
         fixSeg = self.segment(img=fixVol, delta=self.cfg.FILTER.DELTA)
         fixCloud = self.genPoints(fixSeg)
-        print(f"Done!")
+        print(f'Done!')
 
         # moving point cloud
-        print(f"Generating moving point cloud...")
+        print(f'Generating moving point cloud...')
         moveVol = self.clean(
             fpath=self.cfg.DATASET.VOL_MOVE_PATH,
             h=self.cfg.POINT.FILTER_STRENGTH_MOVE,
@@ -140,6 +140,6 @@ class PointCloud:
         )
         moveSeg = self.segment(img=moveVol, delta=self.cfg.FILTER.DELTA)
         moveCloud = self.genPoints(moveSeg)
-        print(f"Done!")
+        print(f'Done!')
 
         return fixCloud, moveCloud

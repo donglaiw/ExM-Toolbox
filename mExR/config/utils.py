@@ -31,4 +31,3 @@ def save_all_cfg(cfg: CfgNode, output_dir: str):
     with open(path, "w") as f:
         f.write(cfg.dump())
     print(f"Full config saved to {path}")
-
